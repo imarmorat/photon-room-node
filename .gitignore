@@ -1,3 +1,7 @@
+#libs
+Adafruit_BME280
+Adafruit_SSD1306
+
 # Compiled Object files
 *.slo
 *.lo
