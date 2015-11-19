@@ -9,6 +9,7 @@
 #include "StatView.h"
 #include "View.h"
 #include "SplashView.h"
+#include "DataCollection.h"
 
 #define OLED_RESET D4
 
