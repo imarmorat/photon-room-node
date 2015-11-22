@@ -2,6 +2,7 @@
 #define _SENSORDATAMANAGER_H
 
 #include "Adafruit_BME280/Adafruit_BME280.h"
+#include "DataCollection.h"
 
 struct sensor_data
 {
@@ -10,12 +11,12 @@ struct sensor_data
     float max;
 } ;
 
-class SensorDataManager
+class SensorDataManager : public IDataCollector
 {
     public:
         SensorDataManager(Adafruit_BME280 bme);
-        void begin();
-        void updateSensorData();
+        void Init();
+        void Collect();
         sensor_data _temperature;
         sensor_data _humidity;
         sensor_data _pressure;

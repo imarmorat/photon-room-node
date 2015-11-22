@@ -10,6 +10,7 @@
 #include "View.h"
 #include "SplashView.h"
 #include "DataCollection.h"
+#include "AnalogDataCollector.h"
 
 #define OLED_RESET D4
 
@@ -28,6 +29,11 @@
 Adafruit_SSD1306 display(OLED_RESET);
 Adafruit_BME280 bme;
 SensorDataManager sensorData(bme);
+DataCollectorManager dataCollectorManager(D7);
+
+void noActionAlarmCallback(float value) {}
+
+AnalogDataCollector mq2GasSensor(D3, 100, 11000, 100, &noActionAlarmCallback, 1000, &noActionAlarmCallback);
 
 /*
     Views declarations
@@ -46,8 +52,9 @@ volatile int currentViewIndex;
 #define BUTTONS_CHANGE_VIEW D3
 
 enum Action { 
-    SwitchToNextView = 1,
-    None = 0
+	None = 0,
+	SwitchToNextView = 1,
+	//CollectData =2
 };
 
 Action actionToDo;
@@ -68,17 +75,17 @@ void switchView()
 
 void onChangeViewRequest()
 {
-    digitalWrite(D7, TRUE);
     actionToDo = SwitchToNextView;
 }
 
 void setup() 
 {
-    //
-    // I2C startup
-    Wire.begin();
-    sensorData.begin();
-    
+	//
+	// Data collection
+	dataCollectorManager.AddCollector(&sensorData);
+	dataCollectorManager.AddCollector(&mq2GasSensor);
+	dataCollectorManager.Init();
+
     //
     // Displpay init
     display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
@@ -113,10 +120,12 @@ void loop()
     switch(actionToDo)
     {
         case None: break;
-        case SwitchToNextView: switchView(); digitalWrite(D7, FALSE); break;
+        case SwitchToNextView: switchView(); break;
+		//case CollectData: dataCollectorManager.Collect(); break;
     }
     
     actionToDo = None;
 }
+
 
 

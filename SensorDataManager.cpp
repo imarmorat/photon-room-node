@@ -4,9 +4,9 @@ SensorDataManager::SensorDataManager(Adafruit_BME280 bme) : _bme()
 {
 }
 
-void SensorDataManager::begin()
+void SensorDataManager::Init()
 {
-	pinMode(D7, OUTPUT);
+	Wire.begin();
  
     if (!_bme.begin())
     {
@@ -20,13 +20,12 @@ void SensorDataManager::begin()
     _pressure.min  = _pressure.max = _pressure.current = _bme.readPressure() / 100.0F;
 }
 
-void SensorDataManager::updateSensorData()
+void SensorDataManager::Collect()
 {
     if (isUpdatingSensorData)
         return;
         
     isUpdatingSensorData = true;
-    //digitalWrite(D7, HIGH);
 
     _temperature.current = _bme.readTemperature();
     delay(sensorDataFetchingDelay);

@@ -72,7 +72,7 @@ void AllSensorDataView::display(Adafruit_SSD1306 * display)
         display->display();
     }
 
-    _sdm->updateSensorData();
+    _sdm->Collect();
 
     display->setCursor(0,10);
     display->setTextSize(3);
