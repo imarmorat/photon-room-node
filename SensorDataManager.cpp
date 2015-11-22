@@ -46,6 +46,5 @@ void SensorDataManager::Collect()
     if (_pressure.current < _pressure.min) _pressure.min = _pressure.current;
     if (_pressure.current > _pressure.max) _pressure.max = _pressure.current;
 
-    //digitalWrite(D7, LOW);
     isUpdatingSensorData = false;
 }

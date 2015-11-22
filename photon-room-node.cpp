@@ -108,7 +108,6 @@ void setup()
     //
     // Interruptions setup
     pinMode(BUTTONS_CHANGE_VIEW, INPUT_PULLUP);
-    pinMode(D7, OUTPUT);
     attachInterrupt(BUTTONS_CHANGE_VIEW, onChangeViewRequest, FALLING);
     
     actionToDo = None;
