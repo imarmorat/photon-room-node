@@ -15,7 +15,7 @@ void DataCollectorManager::Init()
 
 	for (int i = 0; i < _size; i++)
 	{
-		_collectors[i]->Init();
+		_collectors[i]->dataCollector->Init();
 	}
 
 	Timer t = Timer(500, &OnTimerCollect);
@@ -23,12 +23,13 @@ void DataCollectorManager::Init()
 
 void DataCollectorManager::OnTimerCollect()
 {
-
+	// Collect();
+	// CheckAlarm();
 }
 
-void DataCollectorManager::AddCollector(IDataCollector * collector)
+void DataCollectorManager::AddCollector(MeasureMeta * collector)
 {
-	IDataCollector ** newlist = (IDataCollector**) malloc((_size + 1)*sizeof(IDataCollector*));
+	MeasureMeta ** newlist = (MeasureMeta**) malloc((_size + 1)*sizeof(MeasureMeta*));
 	for (int i = 0; i<_size; i++) {
 		newlist[i] = _collectors[i];
 	}
@@ -44,10 +45,17 @@ void DataCollectorManager::Collect()
 
 	for (int i = 0; i < _size; i++)
 	{
-		_collectors[i]->Collect();
+		_collectors[i]->latestValue = _collectors[i]->dataCollector->Collect();
 	}
 
 	digitalWrite(_collectionIndicatorPin, LOW);
+}
+
+float DataCollectorManager::GetLatest(int measureId)
+{
+	for (int i = 0; i < _size; i++)
+		if (_collectors[i]->Id == measureId)
+			return _collectors[i]->latestValue;
 }
 
 

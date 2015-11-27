@@ -4,20 +4,36 @@
 class IDataCollector
 {
 public:
-	virtual void Collect();
+	virtual float Collect();
 	virtual void Init();
+};
+
+struct MeasureMeta
+{
+	int Id;
+	bool canRaiseAlarm;
+	float minWarning;
+	float maxWarning;
+	float minAlarm;
+	float maxAlarm;
+	float latestValue;
+	IDataCollector * dataCollector;
+
+	// TODO: initializer to avoid having to provide latestValue
+	// TODO: find better approach for warning and alarm
 };
 
 class DataCollectorManager {
 public:
 	DataCollectorManager(int8_t collectionIndicatorPin);
-	void AddCollector(IDataCollector *collector);
+	void AddCollector(MeasureMeta *collector);
 	void Init();
 	void Collect();
+	float GetLatest(int measureId);
 	int collectionInterval;
 
 private:
-	IDataCollector ** _collectors;
+	MeasureMeta ** _collectors;
 	int _size;
 	int8_t _collectionIndicatorPin;
 

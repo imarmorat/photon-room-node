@@ -6,11 +6,11 @@ class AllSensorDataView : public View
 {
     public:
         AllSensorDataView();
-        void begin(Adafruit_SSD1306 * gfx, SensorDataManager * sdm);
+        void begin(Adafruit_SSD1306 * gfx, DataCollectorManager * sdm);
         void display(Adafruit_SSD1306 * gfx);
         
     private:
-        SensorDataManager * _sdm;
+		DataCollectorManager * _sdm;
 };
 
 #endif

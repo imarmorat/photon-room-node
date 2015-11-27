@@ -4,13 +4,13 @@
 #include "Adafruit_BME280\Adafruit_BME280.h"
 #include "Adafruit_BME280\Adafruit_Sensor.h"
 
-#include "SensorDataManager.h"
-#include "AllSensorDataView.h"
-#include "StatView.h"
-#include "View.h"
-#include "SplashView.h"
+#include "Sensors\Bme280DataCollector.h"
+#include "Sensors\AnalogDataCollector.h"
+//#include "Views\AllSensorDataView.h"
+#include "Views\StatView.h"
+#include "Views\View.h"
+#include "Views\SplashView.h"
 #include "DataCollection.h"
-#include "AnalogDataCollector.h"
 
 #define OLED_RESET D4
 
@@ -28,19 +28,20 @@
 */
 Adafruit_SSD1306 display(OLED_RESET);
 Adafruit_BME280 bme;
-SensorDataManager sensorData(bme);
+TemperatureDataCollector tempDataCollector(&bme);
+HumidityDataCollector humidityDataCollector(&bme);
+PressureDataCollector pressureDataCollector(NULL);
 DataCollectorManager dataCollectorManager(D7);
+AnalogDataCollector mq2GasSensor(D3);
 
-void noActionAlarmCallback(float value) {}
 
-AnalogDataCollector mq2GasSensor(D3, 100, 11000, 100, &noActionAlarmCallback, 1000, &noActionAlarmCallback);
 
 /*
     Views declarations
 */
 SplashView splashView;
 StatView statsView;
-AllSensorDataView overallSensorDataView;
+//AllSensorDataView overallSensorDataView;
 
 #define VIEW_COUNT 3
 View* views[VIEW_COUNT];
@@ -80,10 +81,17 @@ void onChangeViewRequest()
 
 void setup() 
 {
+	MeasureMeta tempMeasure = { 1, true , 10.0, 30.0, 0.0, 40.0, -1, &tempDataCollector };
+	MeasureMeta humidityMeasure = { 2, false, -9999, -9999, -9999, -9999, -1, &humidityDataCollector };
+	MeasureMeta pressureMeasure = { 3, false,  -9999, -9999, -9999, -9999, -1, &tempDataCollector };
+	MeasureMeta m2Measure = { 4, true, 0, 100, 0, 1000, -1, &mq2GasSensor };
+
 	//
 	// Data collection
-	dataCollectorManager.AddCollector(&sensorData);
-	dataCollectorManager.AddCollector(&mq2GasSensor);
+	dataCollectorManager.AddCollector(&tempMeasure);
+	dataCollectorManager.AddCollector(&humidityMeasure);
+	dataCollectorManager.AddCollector(&pressureMeasure);
+	dataCollectorManager.AddCollector(&m2Measure);
 	dataCollectorManager.Init();
 
     //
@@ -95,15 +103,15 @@ void setup()
     //
     // Views init
     views[0] = &splashView;
-    views[1] = &overallSensorDataView;
+//    views[1] = &overallSensorDataView;
     views[2] = &statsView;
     currentViewIndex = 0;
 
     views[currentViewIndex]->display(&display);
     delay(5000);
     
-    overallSensorDataView.begin(&display, &sensorData);
-    delay(2000);
+ //   overallSensorDataView.begin(&display, &sensorData);
+ //   delay(2000);
     
     //
     // Interruptions setup
