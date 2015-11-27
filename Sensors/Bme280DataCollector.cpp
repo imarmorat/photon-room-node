@@ -27,6 +27,10 @@ float Bme280DataCollector::Collect()
 /*
 	TEMPERATURE
 */
+TemperatureDataCollector::TemperatureDataCollector(Adafruit_BME280 * bme) : Bme280DataCollector(bme)
+{
+
+}
 
 float TemperatureDataCollector::Collect()
 {
@@ -37,7 +41,10 @@ float TemperatureDataCollector::Collect()
 /*
 	HUMIDITY
 */
+HumidityDataCollector::HumidityDataCollector(Adafruit_BME280 * bme) : Bme280DataCollector(bme)
+{
 
+}
 float HumidityDataCollector::Collect()
 {
 	_currentValue = _bme->readHumidity();
@@ -47,7 +54,10 @@ float HumidityDataCollector::Collect()
 /*
 	PRESSURE
 */
+PressureDataCollector::PressureDataCollector(Adafruit_BME280 * bme) : Bme280DataCollector(bme)
+{
 
+}
 float PressureDataCollector::Collect()
 {
 	_currentValue = _bme->readPressure() / 100.0F;

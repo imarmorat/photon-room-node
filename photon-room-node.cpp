@@ -30,7 +30,7 @@ Adafruit_SSD1306 display(OLED_RESET);
 Adafruit_BME280 bme;
 TemperatureDataCollector tempDataCollector(&bme);
 HumidityDataCollector humidityDataCollector(&bme);
-PressureDataCollector pressureDataCollector(NULL);
+PressureDataCollector pressureDataCollector(&bme);
 DataCollectorManager dataCollectorManager(D7);
 AnalogDataCollector mq2GasSensor(D3);
 
