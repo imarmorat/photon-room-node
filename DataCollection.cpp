@@ -35,13 +35,13 @@ void DataCollectorManager::Collect(void(*onMeasureCollectionDone)(MeasureMeta * 
 	digitalWrite(_collectionIndicatorPin, LOW);
 }
 
-float DataCollectorManager::GetLatest(int measureId)
-{
-	for (int i = 0; i < nbMeasures; i ++ )
-	{
-		if (_collectors[i]->Id == measureId)
-			return _collectors[i]->latestValue;
-	}
-}
+//float DataCollectorManager::GetLatest(int measureId)
+//{
+//	for (int i = 0; i < nbMeasures; i ++ )
+//	{
+//		if (_collectors[i]->Id == measureId)
+//			return _collectors[i]->latestValue;
+//	}
+//}
 
 

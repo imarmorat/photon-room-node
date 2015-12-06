@@ -1,19 +1,22 @@
 #include "Adafruit_SSD1306\Adafruit_SSD1306.h"
 #include "Adafruit_BME280\Adafruit_BME280.h"
 #include "../DataCollection.h"
+#include "../MeasureDefinitions.h"
 #include "AllSensorDataView.h"
 #include "View.h"
 
 bool showHeartbeat = false;
+
+// todo: I dont like having external static used here, need to get them passed through at some point
+// e.g. by passing Measures + some id
 
 AllSensorDataView::AllSensorDataView()
 {
     /* remember to be extra careful here, had some crashes on photon when doing some init things here */
 }
 
-void AllSensorDataView::begin(Adafruit_SSD1306 * gfx, DataCollectorManager * sdm)
+void AllSensorDataView::begin(Adafruit_SSD1306 * gfx)
 {
-    _sdm = sdm;
 }
 
 void displayTemplate(Adafruit_SSD1306 * gfx)
@@ -74,23 +77,23 @@ void AllSensorDataView::display(Adafruit_SSD1306 * display)
 
     display->setCursor(0,10);
     display->setTextSize(3);
-    display->println(String::format("%2.1f", _sdm->GetLatest(1)));
+    display->println(String::format("%2.1f", temperatureMeasure.latestValue));
     
     display->setCursor(95,10);
     display->setTextSize(1);
-    //display->println(String::format("%2.1f", _sdm->_temperature.max));
+    display->println(String::format("%2.1f", temperatureMeasure.dayMax));
   
     display->setCursor(95,22);
     display->setTextSize(1);
-    //display->println(String::format("%2.1f", _sdm->_temperature.min));
+    display->println(String::format("%2.1f", temperatureMeasure.dayMin));
 
     display->setCursor(0,46);
     display->setTextSize(2);
-    display->println(String::format("%2.1f", _sdm->GetLatest(2)));
+    display->println(String::format("%2.1f", humidityMeasure.latestValue));
     
     display->setCursor(64,46);
     display->setTextSize(2);
-    display->println(String::format("%4.0f", _sdm->GetLatest(3)));
+    display->println(String::format("%4.0f", pressureMeasure.latestValue));
     
     display->fillRoundRect(124, 1, 2, 2, 0, WHITE);
     

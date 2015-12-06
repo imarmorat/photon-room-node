@@ -58,4 +58,11 @@ void Alarm::DisableAlarm()
 void Alarm::DisplayAlerts()
 {
 	// show a summary of the alerts
+	_display->clearDisplay();
+	_display->setCursor(0, 0);
+	_display->setTextSize(3);
+	_display->println("ALERT!!");
+	_display->display();
+
+	// todo: display useful information
 }

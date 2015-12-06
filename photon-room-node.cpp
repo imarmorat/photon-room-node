@@ -7,12 +7,13 @@
 
 #include "Sensors\Bme280DataCollector.h"
 #include "Sensors\AnalogDataCollector.h"
-//#include "Views\AllSensorDataView.h"
+#include "Views\AllSensorDataView.h"
 #include "Views\StatView.h"
 #include "Views\View.h"
 #include "Views\SplashView.h"
 #include "DataCollection.h"
 #include "Alarm.h"
+#include "MeasureDefinitions.h"
 
 #define OLED_RESET D4
 
@@ -25,35 +26,12 @@
 #define BME_CS D5
 #define SEALEVELPRESSURE_HPA (1013.25)
 
-MeasureMeta* measures[4];
 
 /*
     General declarations
 */
 Adafruit_SSD1306 display(OLED_RESET);
-Adafruit_BME280 bme;
 DataCollectorManager dataCollectorManager(D7);
-
-TemperatureDataCollector tempDataCollector(&bme);
-MeasureMeta temperatureMeasure = MeasureMeta(
-	1, 
-	BoundariesMeasureCheck(10.0, 30.0), 
-	BoundariesMeasureCheck(0.0, 40.0), 
-	&tempDataCollector);
-
-HumidityDataCollector humidityDataCollector(&bme);
-MeasureMeta humidityMeasure = MeasureMeta(2, &humidityDataCollector);
-
-PressureDataCollector pressureDataCollector(&bme);
-MeasureMeta pressureMeasure = MeasureMeta(3, &pressureDataCollector);
-
-AnalogDataCollector mq2GasSensor(D3);
-MeasureMeta mq2Measure = MeasureMeta(
-	4, 
-	BoundariesMeasureCheck(0, 100), 
-	BoundariesMeasureCheck(0, 1000), 
-	&mq2GasSensor);
-
 Alarm alarm(D2, &display);
 
 /*
@@ -61,7 +39,7 @@ Alarm alarm(D2, &display);
 */
 SplashView splashView;
 StatView statsView;
-//AllSensorDataView overallSensorDataView;
+AllSensorDataView overallSensorDataView;
 
 #define VIEW_COUNT 3
 View* views[VIEW_COUNT];
@@ -149,15 +127,14 @@ void setup()
     //
     // Views init
     views[0] = &splashView;
-	//views[1] = &overallSensorDataView;
+	views[1] = &overallSensorDataView;
     views[2] = &statsView;
     currentViewIndex = 0;
 
+	//
+	// Shows splash view
     views[currentViewIndex]->display(&display);
     delay(5000);
-    
- //   overallSensorDataView.begin(&display, &sensorData);
- //   delay(2000);
     
     //
     // Interruptions setup

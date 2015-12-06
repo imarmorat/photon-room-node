@@ -16,6 +16,13 @@ public:
 	int Id;
 	bool canRaiseAlarm;
 	float latestValue;
+
+	//
+	// some stats
+	float dayMin;
+	float dayMax;
+	unsigned long timeOfSampling;
+
 	MeasureZone latestLevel;
 
 	//
@@ -37,7 +44,8 @@ public:
 
 	void Init()
 	{
-		latestValue = -1;
+		latestValue = dayMin = dayMax = -1;
+		timeOfSampling = 0;
 		latestLevel = MeasureZone_Normal;
 		DataCollector->Init();
 	}
@@ -48,6 +56,22 @@ public:
 	{
 		latestValue = DataCollector->Collect();
 		latestLevel = CheckAgainstLevels();
+
+		unsigned long t = millis();
+
+		// update stats
+		bool isSameDayThanLastSampling = Time.day(t) == Time.day(timeOfSampling);
+		if (isSameDayThanLastSampling)
+		{
+			dayMin = latestValue < dayMin ? latestValue : dayMin;
+			dayMax = latestValue > dayMax ? latestValue : dayMax;
+		}
+		else
+		{
+			dayMin = dayMax = latestValue;
+		}
+		
+		timeOfSampling = t;
 	}
 
 private:
@@ -72,15 +96,12 @@ private:
 class DataCollectorManager {
 public:
 	DataCollectorManager(int8_t collectionIndicatorPin);
-	//void AddCollector(MeasureMeta *collector);
 	void Init(MeasureMeta ** measures);
 	void Collect(void(*onMeasureCollectionDone)(MeasureMeta *measure));
-	float GetLatest(int measureId);
 	int collectionInterval;
 
 private:
 	MeasureMeta ** _collectors;
-	//int _size;
 	int8_t _collectionIndicatorPin;
 
 	static bool isCurrentlyCollecting;
