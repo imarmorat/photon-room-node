@@ -1,4 +1,5 @@
 #include "application.h"
+#include "general.h"
 
 #include "Adafruit_SSD1306\Adafruit_SSD1306.h"
 #include "Adafruit_BME280\Adafruit_BME280.h"
@@ -11,6 +12,7 @@
 #include "Views\View.h"
 #include "Views\SplashView.h"
 #include "DataCollection.h"
+#include "Alarm.h"
 
 #define OLED_RESET D4
 
@@ -23,18 +25,36 @@
 #define BME_CS D5
 #define SEALEVELPRESSURE_HPA (1013.25)
 
+MeasureMeta* measures[4];
+
 /*
     General declarations
 */
 Adafruit_SSD1306 display(OLED_RESET);
 Adafruit_BME280 bme;
-TemperatureDataCollector tempDataCollector(&bme);
-HumidityDataCollector humidityDataCollector(&bme);
-PressureDataCollector pressureDataCollector(&bme);
 DataCollectorManager dataCollectorManager(D7);
+
+TemperatureDataCollector tempDataCollector(&bme);
+MeasureMeta temperatureMeasure = MeasureMeta(
+	1, 
+	BoundariesMeasureCheck(10.0, 30.0), 
+	BoundariesMeasureCheck(0.0, 40.0), 
+	&tempDataCollector);
+
+HumidityDataCollector humidityDataCollector(&bme);
+MeasureMeta humidityMeasure = MeasureMeta(2, &humidityDataCollector);
+
+PressureDataCollector pressureDataCollector(&bme);
+MeasureMeta pressureMeasure = MeasureMeta(3, &pressureDataCollector);
+
 AnalogDataCollector mq2GasSensor(D3);
+MeasureMeta mq2Measure = MeasureMeta(
+	4, 
+	BoundariesMeasureCheck(0, 100), 
+	BoundariesMeasureCheck(0, 1000), 
+	&mq2GasSensor);
 
-
+Alarm alarm(D2, &display);
 
 /*
     Views declarations
@@ -46,17 +66,6 @@ StatView statsView;
 #define VIEW_COUNT 3
 View* views[VIEW_COUNT];
 volatile int currentViewIndex;
-
-/*
-    Input/output declarations
-*/
-#define BUTTONS_CHANGE_VIEW D3
-
-enum Action { 
-	None = 0,
-	SwitchToNextView = 1,
-	//CollectData =2
-};
 
 Action actionToDo;
 
@@ -74,25 +83,62 @@ void switchView()
     views[currentViewIndex]->display(&display);
 }
 
-void onChangeViewRequest()
+void onButton1Pressed()
 {
-    actionToDo = SwitchToNextView;
+	actionToDo = views[currentViewIndex]->handleInput(BoardInput_Button1);
 }
 
+void onButton2Pressed()
+{
+	actionToDo = views[currentViewIndex]->handleInput(BoardInput_Button2);
+}
+
+void stopAlarm()
+{
+	noInterrupts();
+	
+	alarm.DisableAlarm();
+
+	// reattach normal behaviour to user inputs
+	attachInterrupt(BoardInput_Button1, onButton1Pressed, FALLING);
+	attachInterrupt(BoardInput_Button2, onButton2Pressed, FALLING);
+
+	interrupts();
+
+	// come back to the current view
+	views[currentViewIndex]->display(&display);
+}
+
+void onMeasureCollectionDone(MeasureMeta * measure)
+{
+	noInterrupts();
+
+	alarm.CheckForAlerts();
+
+	attachInterrupt(BoardInput_Button1, stopAlarm, FALLING);
+	attachInterrupt(BoardInput_Button2, stopAlarm, FALLING);
+	
+	interrupts();
+}
+
+void onTimerElapsed()
+{
+	// collect
+	dataCollectorManager.Collect(onMeasureCollectionDone);
+}
+
+/*
+	PHOTON SETUP
+*/
 void setup() 
 {
-	MeasureMeta tempMeasure = { 1, true , 10.0, 30.0, 0.0, 40.0, -1, &tempDataCollector };
-	MeasureMeta humidityMeasure = { 2, false, -9999, -9999, -9999, -9999, -1, &humidityDataCollector };
-	MeasureMeta pressureMeasure = { 3, false,  -9999, -9999, -9999, -9999, -1, &tempDataCollector };
-	MeasureMeta m2Measure = { 4, true, 0, 100, 0, 1000, -1, &mq2GasSensor };
+	measures[0] = &temperatureMeasure;
+	measures[1] = &humidityMeasure;
+	measures[2] = &pressureMeasure;
+	measures[3] = &mq2Measure;
 
-	//
-	// Data collection
-	dataCollectorManager.AddCollector(&tempMeasure);
-	dataCollectorManager.AddCollector(&humidityMeasure);
-	dataCollectorManager.AddCollector(&pressureMeasure);
-	dataCollectorManager.AddCollector(&m2Measure);
-	dataCollectorManager.Init();
+	dataCollectorManager.Init(measures);
+	alarm.Init(measures);
 
     //
     // Displpay init
@@ -103,7 +149,7 @@ void setup()
     //
     // Views init
     views[0] = &splashView;
-//    views[1] = &overallSensorDataView;
+	//views[1] = &overallSensorDataView;
     views[2] = &statsView;
     currentViewIndex = 0;
 
@@ -115,24 +161,30 @@ void setup()
     
     //
     // Interruptions setup
-    pinMode(BUTTONS_CHANGE_VIEW, INPUT_PULLUP);
-    attachInterrupt(BUTTONS_CHANGE_VIEW, onChangeViewRequest, FALLING);
+	pinMode(BoardInput_Button1, INPUT_PULLUP);
+	pinMode(BoardInput_Button2, INPUT_PULLUP);
+	attachInterrupt(BoardInput_Button1, onButton1Pressed, FALLING);
+	attachInterrupt(BoardInput_Button2, onButton2Pressed, FALLING);
     
-    actionToDo = None;
+    actionToDo = Action_SwitchToNextView;
+	Timer t = Timer(500, &onTimerElapsed);
 }
 
+/*
+	PHOTON LOOP
+*/
 void loop() 
 {
     delay(100);
     switch(actionToDo)
     {
-        case None: break;
-        case SwitchToNextView: switchView(); break;
+        case Action_None: break;
+        case Action_SwitchToNextView: switchView(); break;
+		case Action_StopAlarm: stopAlarm(); break;
 		//case CollectData: dataCollectorManager.Collect(); break;
     }
     
-    actionToDo = None;
+    actionToDo = Action_None;
 }
-
 
 

@@ -72,8 +72,6 @@ void AllSensorDataView::display(Adafruit_SSD1306 * display)
         display->display();
     }
 
-    _sdm->Collect();
-
     display->setCursor(0,10);
     display->setTextSize(3);
     display->println(String::format("%2.1f", _sdm->GetLatest(1)));

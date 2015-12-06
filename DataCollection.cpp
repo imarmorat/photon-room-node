@@ -1,51 +1,35 @@
 #include "Application.h"
-
+#include "general.h"
 #include "DataCollection.h"
 #include <malloc.h>
 
+#define nbMeasures sizeof(_collectors)/sizeof(IDataCollector*)
 
 DataCollectorManager::DataCollectorManager(int8_t collectionIndicatorPin)
 {
 	_collectionIndicatorPin = collectionIndicatorPin;
 }
 
-void DataCollectorManager::Init()
+void DataCollectorManager::Init(MeasureMeta ** measures)
 {
 	pinMode(_collectionIndicatorPin, OUTPUT);
 
-	for (int i = 0; i < _size; i++)
+	_collectors = measures;
+
+	for (int i = 0; i < nbMeasures; i ++ )
 	{
-		_collectors[i]->dataCollector->Init();
+		_collectors[i]->Init();
 	}
-
-	Timer t = Timer(500, &OnTimerCollect);
 }
 
-void DataCollectorManager::OnTimerCollect()
-{
-	// Collect();
-	// CheckAlarm();
-}
-
-void DataCollectorManager::AddCollector(MeasureMeta * collector)
-{
-	MeasureMeta ** newlist = (MeasureMeta**) malloc((_size + 1)*sizeof(MeasureMeta*));
-	for (int i = 0; i<_size; i++) {
-		newlist[i] = _collectors[i];
-	}
-	
-	newlist[_size] = collector;
-	_collectors = newlist;
-	_size++;
-}
-
-void DataCollectorManager::Collect()
+void DataCollectorManager::Collect(void(*onMeasureCollectionDone)(MeasureMeta * measure))
 {
 	digitalWrite(_collectionIndicatorPin, HIGH);
-
-	for (int i = 0; i < _size; i++)
+	
+	for (int i = 0; i < nbMeasures; i ++ )
 	{
-		_collectors[i]->latestValue = _collectors[i]->dataCollector->Collect();
+		_collectors[i]->Update();
+		onMeasureCollectionDone(_collectors[i]);
 	}
 
 	digitalWrite(_collectionIndicatorPin, LOW);
@@ -53,9 +37,11 @@ void DataCollectorManager::Collect()
 
 float DataCollectorManager::GetLatest(int measureId)
 {
-	for (int i = 0; i < _size; i++)
+	for (int i = 0; i < nbMeasures; i ++ )
+	{
 		if (_collectors[i]->Id == measureId)
 			return _collectors[i]->latestValue;
+	}
 }
 
 
