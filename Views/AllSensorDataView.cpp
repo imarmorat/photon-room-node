@@ -1,7 +1,6 @@
 #include "Adafruit_SSD1306\Adafruit_SSD1306.h"
 #include "Adafruit_BME280\Adafruit_BME280.h"
 #include "../DataCollection.h"
-#include "../MeasureDefinitions.h"
 #include "AllSensorDataView.h"
 #include "View.h"
 
@@ -10,7 +9,7 @@ bool showHeartbeat = false;
 // todo: I dont like having external static used here, need to get them passed through at some point
 // e.g. by passing Measures + some id
 
-AllSensorDataView::AllSensorDataView()
+AllSensorDataView::AllSensorDataView(MeasureMeta** measures) : _measures(measures)
 {
     /* remember to be extra careful here, had some crashes on photon when doing some init things here */
 }
@@ -23,6 +22,7 @@ void displayTemplate(Adafruit_SSD1306 * gfx)
 {
     gfx->clearDisplay(); 
     gfx->setCursor(0,0);
+	gfx->setTextSize(1);
     gfx->println("Temperature");
   
     gfx->setCursor(0,10);
@@ -77,23 +77,23 @@ void AllSensorDataView::display(Adafruit_SSD1306 * display)
 
     display->setCursor(0,10);
     display->setTextSize(3);
-    display->println(String::format("%2.1f", temperatureMeasure.latestValue));
+    display->println(String::format("%2.1f", _measures[TEMPERATURE_MEASURE_ID]->latestValue));
     
     display->setCursor(95,10);
     display->setTextSize(1);
-    display->println(String::format("%2.1f", temperatureMeasure.dayMax));
+    display->println(String::format("%2.1f", _measures[TEMPERATURE_MEASURE_ID]->dayMax));
   
     display->setCursor(95,22);
     display->setTextSize(1);
-    display->println(String::format("%2.1f", temperatureMeasure.dayMin));
+    display->println(String::format("%2.1f", _measures[TEMPERATURE_MEASURE_ID]->dayMin));
 
     display->setCursor(0,46);
     display->setTextSize(2);
-    display->println(String::format("%2.1f", humidityMeasure.latestValue));
+    display->println(String::format("%2.1f", _measures[HUMIDITY_MEASURE_ID]->latestValue));
     
     display->setCursor(64,46);
     display->setTextSize(2);
-    display->println(String::format("%4.0f", pressureMeasure.latestValue));
+    display->println(String::format("%4.0f", _measures[PRESSURE_MEASURE_ID]->latestValue));
     
     display->fillRoundRect(124, 1, 2, 2, 0, WHITE);
     

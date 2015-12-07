@@ -5,12 +5,11 @@
 class AllSensorDataView : public View
 {
     public:
-        AllSensorDataView();
+        AllSensorDataView(MeasureMeta** measures);
         void begin(Adafruit_SSD1306 * gfx);
         void display(Adafruit_SSD1306 * gfx);
-        
-    private:
-		DataCollectorManager * _sdm;
+	private:
+		MeasureMeta** _measures;
 };
 
 #endif

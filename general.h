@@ -3,15 +3,20 @@
 
 #include "application.h"
 
+#define TEMPERATURE_MEASURE_ID	0
+#define HUMIDITY_MEASURE_ID	1
+#define PRESSURE_MEASURE_ID	2
+#define MEASURE_COUNT 3
+
 enum Action { 
 	Action_None = 0,
 	Action_SwitchToNextView = 1,
 	Action_StopAlarm = 2
 };
 
-enum BoardInput {
-	BoardInput_Button1 = D6, 
-	BoardInput_Button2 = D7 
+enum BoardInput : int8_t {
+	BoardInput_Button1 = D3, 
+	BoardInput_Button2 = D5 
 };
 
 enum MeasureZone

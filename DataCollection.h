@@ -83,10 +83,10 @@ private:
 	// Checks the latest value against the defined zones
 	MeasureZone CheckAgainstLevels()
 	{
-		if (ErrorCheck.Test(latestValue))
+		if (!ErrorCheck.Test(latestValue))
 			return MeasureZone_Critical;
 
-		if (WarningCheck.Test(latestValue))
+		if (!WarningCheck.Test(latestValue))
 			return MeasureZone_Warning;
 
 		return MeasureZone_Normal;
