@@ -51,16 +51,20 @@ volatile int currentViewIndex;
 Action actionToDo;
 
 Adafruit_BME280 bme;
-TemperatureDataCollector tempDataCollector(&bme);
-HumidityDataCollector humidityDataCollector(&bme);
-PressureDataCollector pressureDataCollector(&bme);
 
+TemperatureDataCollector tempDataCollector(&bme);
+BoundariesMeasureCheck temperatureWarningBoundaries = BoundariesMeasureCheck(10.0, 25.0);
+BoundariesMeasureCheck temperatureCriticalBoundaries = BoundariesMeasureCheck(0.0, 40.0);
 MeasureMeta temperatureMeasure = MeasureMeta(
 		1,
-		BoundariesMeasureCheck(10.0, 23.0), // warning
-		BoundariesMeasureCheck(0.0, 40.0), // error
+		&temperatureWarningBoundaries, // warning
+		&temperatureCriticalBoundaries, // error
 		&tempDataCollector);
+
+HumidityDataCollector humidityDataCollector(&bme);
 MeasureMeta humidityMeasure = MeasureMeta(2, &humidityDataCollector);
+
+PressureDataCollector pressureDataCollector(&bme);
 MeasureMeta pressureMeasure = MeasureMeta(3, &pressureDataCollector);
 	
 //AnalogDataCollector mq2GasSensor(D3);
@@ -75,13 +79,24 @@ MeasureMeta pressureMeasure = MeasureMeta(3, &pressureDataCollector);
     - do nothing in constructors, only in begin() as crashed the photon couple of time (red light)
     - pass global objects using obj address, not full object as doing a shadow copy and this mess up object local values
 */
+
+
 void switchView()
 {
+	noInterrupts();
+
     currentViewIndex++;
     if (currentViewIndex >= VIEW_COUNT)
         currentViewIndex = 0;
     
     views[currentViewIndex]->display(&display);
+
+	interrupts();
+}
+
+void refreshView()
+{
+	views[currentViewIndex]->display(&display);
 }
 
 void onButton1Pressed()
@@ -104,8 +119,7 @@ void stopAlarm()
 
 	interrupts();
 
-	// come back to the current view
-	views[currentViewIndex]->display(&display);
+	refreshView();	
 }
 
 void onMeasureCollectionDone(MeasureMeta * measure)
@@ -113,6 +127,8 @@ void onMeasureCollectionDone(MeasureMeta * measure)
 	noInterrupts();
 
 	alarm.CheckForAlerts();
+	if (!alarm.IsTriggered())
+		actionToDo = Action_RefreshView;
 	
 	interrupts();
 }
@@ -156,18 +172,18 @@ void setup()
     //
     // Interruptions setup
 	pinMode(BoardInput_Button1, INPUT_PULLUP);
-	//pinMode(BoardInput_Button2, INPUT_PULLUP);
+	pinMode(BoardInput_Button2, INPUT_PULLUP);
 	attachInterrupt(BoardInput_Button1, onButton1Pressed, FALLING);
-	//attachInterrupt(BoardInput_Button2, onButton2Pressed, FALLING);
+	attachInterrupt(BoardInput_Button2, onButton2Pressed, FALLING);
     
 	dataCollectorManager.Init(measures);
 	alarm.Init(measures);
 	
     actionToDo = Action_SwitchToNextView;
 	t.start();
-	Particle.publish("event", "setup completed");
+
 	dataCollectorManager.Collect(onMeasureCollectionDone);
-	Particle.publish("event", "first data completion complete");
+	Particle.publish("event", "Setup completed");
 }
 
 /*
@@ -178,9 +194,10 @@ void loop()
     delay(100);
     switch(actionToDo)
     {
-        case Action_None: views[currentViewIndex]->display(&display);break;
+        case Action_None: break;
         case Action_SwitchToNextView: switchView(); break;
 		case Action_StopAlarm: stopAlarm(); break;
+		case Action_RefreshView: refreshView(); break;
     }
     
     actionToDo = Action_None;

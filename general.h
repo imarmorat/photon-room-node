@@ -11,7 +11,8 @@
 enum Action { 
 	Action_None = 0,
 	Action_SwitchToNextView = 1,
-	Action_StopAlarm = 2
+	Action_StopAlarm = 2,
+	Action_RefreshView = 3
 };
 
 enum BoardInput : int8_t {
@@ -28,19 +29,19 @@ enum MeasureZone
 
 struct MeasureCheck
 {
-	virtual bool Test(float value) { return true; }
+	virtual bool Test(float value) = 0;
 };
 
 struct NoMeasureCheck : MeasureCheck
 {
-	bool Test(float value) { return true; }
+	virtual bool Test(float value) { return true; }
 };
 
 struct BoundariesMeasureCheck : MeasureCheck
 {
 	float Min;
 	float Max;
-	bool Test(float value) { return value >= Min && value <= Max; }
+	virtual bool Test(float value) { return value >= Min && value <= Max; }
 
 	BoundariesMeasureCheck(float min, float max) : Min(min), Max(max) {}
 };

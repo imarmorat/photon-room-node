@@ -27,19 +27,21 @@ public:
 
 	//
 	// Constructor
-	MeasureMeta(int id, MeasureCheck warning, MeasureCheck error, IDataCollector * dataCollector) :
-		Id(id), WarningCheck(warning), ErrorCheck(error), DataCollector(dataCollector)
+	MeasureMeta(int id,  MeasureCheck * warning,  MeasureCheck * error, IDataCollector * dataCollector) :
+		Id(id), DataCollector(dataCollector)
 	{
+		WarningCheck = warning;
+		ErrorCheck = error;
 		canRaiseAlarm = true;
 	}
 
 	//
-	// Constructor
+	// Constructor - no measure checks will be performed
 	MeasureMeta(int id, IDataCollector * dataCollector) : Id(id), DataCollector(dataCollector)
 	{
 		canRaiseAlarm = true;
-		WarningCheck = NoMeasureCheck();
-		ErrorCheck = NoMeasureCheck();
+		WarningCheck = new NoMeasureCheck();
+		ErrorCheck = new NoMeasureCheck();
 	}
 
 	void Init()
@@ -75,18 +77,18 @@ public:
 	}
 
 private:
-	MeasureCheck WarningCheck;
-	MeasureCheck ErrorCheck;
+	MeasureCheck * WarningCheck;
+	MeasureCheck * ErrorCheck;
 	IDataCollector * DataCollector;
 
 	//
 	// Checks the latest value against the defined zones
 	MeasureZone CheckAgainstLevels()
 	{
-		if (!ErrorCheck.Test(latestValue))
+		if (!ErrorCheck->Test(latestValue))
 			return MeasureZone_Critical;
 
-		if (!WarningCheck.Test(latestValue))
+		if (!WarningCheck->Test(latestValue))
 			return MeasureZone_Warning;
 
 		return MeasureZone_Normal;

@@ -10,6 +10,7 @@ public:
 	void TriggerAlarm();
 	void DisableAlarm();
 	void DisplayAlerts();
+	bool IsTriggered();
 
 private:
 	int _buzzerPin;

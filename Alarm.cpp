@@ -43,10 +43,6 @@ void Alarm::TriggerAlarm()
 {
 	_isOn = true;
 
-	// todo: different display whether only warnings or error
-	// warning are non blocking?
-
-
 	//
 	// finally, display and ring the bell
 	//tone(_buzzerPin, 2555, 0); // https://docs.particle.io/reference/firmware/core/#tone-
@@ -59,6 +55,11 @@ void Alarm::DisableAlarm()
 	//noTone(_buzzerPin);
 	digitalWrite(_buzzerPin, LOW);
 	_isOn = false;
+}
+
+bool Alarm::IsTriggered()
+{
+	return _isOn;
 }
 
 void Alarm::DisplayAlerts()
