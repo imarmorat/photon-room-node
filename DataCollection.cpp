@@ -31,7 +31,6 @@ void DataCollectorManager::Collect(void(*onMeasureCollectionDone)(MeasureMeta * 
 	for (int i = 0; i < MEASURE_COUNT; i++)
 	{
 		_collectors[i]->Update();
-		Particle.publish("data", String::format("Measure for %d: %f", i, _collectors[i]->latestValue));
 		onMeasureCollectionDone(_collectors[i]);
 	}
 

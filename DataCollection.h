@@ -3,6 +3,8 @@
 
 #include "general.h"
 
+#define UNDEFINED_VALUE -99999
+
 class IDataCollector
 {
 public:
@@ -46,7 +48,7 @@ public:
 
 	void Init()
 	{
-		latestValue = dayMin = dayMax = -1;
+		latestValue = dayMin = dayMax = UNDEFINED_VALUE;
 		timeOfSampling = 0;
 		latestLevel = MeasureZone_Normal;
 		DataCollector->Init();
@@ -59,11 +61,11 @@ public:
 		latestValue = DataCollector->Collect();
 		latestLevel = CheckAgainstLevels();
 
-		unsigned long t = millis();
+		unsigned long t = Time.now();
 
 		// update stats
 		bool isSameDayThanLastSampling = Time.day(t) == Time.day(timeOfSampling);
-		if (isSameDayThanLastSampling)
+		if (isSameDayThanLastSampling && !(timeOfSampling == 0))
 		{
 			dayMin = latestValue < dayMin ? latestValue : dayMin;
 			dayMax = latestValue > dayMax ? latestValue : dayMax;
@@ -74,6 +76,8 @@ public:
 		}
 		
 		timeOfSampling = t;
+
+		Particle.publish(String::format("events.measures.%d.capture", Id), String::format("%f", latestValue));
 	}
 
 private:

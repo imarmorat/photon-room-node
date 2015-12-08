@@ -9,12 +9,11 @@ Bme280DataCollector::Bme280DataCollector(Adafruit_BME280 * bme) : _bme(bme)
 void Bme280DataCollector::Init()
 {
 	bool result = _bme->begin();
-	Particle.publish("event", result? "bme: success" : "bme: failed");
-	//if (!_bme->begin())
-	//{
-	//	Particle.publish("event", "bme not working");
-	//	while (1) { Particle.process(); };
-	//}
+	if (!_bme->begin())
+	{
+		Particle.publish("event", "bme not working");
+		while (1) { Particle.process(); };
+	}
 
 	_currentValue = Collect();
 }

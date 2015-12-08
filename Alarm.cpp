@@ -30,8 +30,6 @@ void Alarm::CheckForAlerts()
 			case MeasureZone_Normal: nbNormals++; break;
 		}
 	}
-
-	Particle.publish("alarm", String::format("Found %d ok, %d warning, %d critical", nbNormals, nbWarnings, nbCriticals));
 	
 	if (nbCriticals > 0 || nbWarnings > 0)
 		TriggerAlarm();
@@ -41,6 +39,9 @@ void Alarm::CheckForAlerts()
 
 void Alarm::TriggerAlarm()
 {
+	if (_isOn)
+		return;
+
 	_isOn = true;
 
 	//
@@ -48,13 +49,20 @@ void Alarm::TriggerAlarm()
 	//tone(_buzzerPin, 2555, 0); // https://docs.particle.io/reference/firmware/core/#tone-
 	digitalWrite(_buzzerPin, HIGH);
 	DisplayAlerts();
+
+	Particle.publish("events.alarm.status", "on");
 }
 
 void Alarm::DisableAlarm()
 {
+	if (!_isOn)
+		return;
+
 	//noTone(_buzzerPin);
 	digitalWrite(_buzzerPin, LOW);
 	_isOn = false;
+
+	Particle.publish("events.alarm.status", "off");
 }
 
 bool Alarm::IsTriggered()

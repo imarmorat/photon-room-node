@@ -26,9 +26,6 @@
 #define BME_CS D6
 #define SEALEVELPRESSURE_HPA (1013.25)
 
-/* REMINDER: NO DELAY IN ISR */
-
-MeasureMeta** measures = (MeasureMeta**)malloc(3*sizeof(MeasureMeta*));
 
 /*
     General declarations
@@ -36,6 +33,7 @@ MeasureMeta** measures = (MeasureMeta**)malloc(3*sizeof(MeasureMeta*));
 Adafruit_SSD1306 display(OLED_RESET);
 DataCollectorManager dataCollectorManager(D7);
 Alarm alarm(D4, &display);
+MeasureMeta** measures = (MeasureMeta**)malloc(3 * sizeof(MeasureMeta*));
 
 /*
     Views declarations
@@ -49,6 +47,7 @@ View* views[VIEW_COUNT];
 volatile int currentViewIndex;
 
 Action actionToDo;
+
 
 Adafruit_BME280 bme;
 
@@ -78,6 +77,7 @@ MeasureMeta pressureMeasure = MeasureMeta(3, &pressureDataCollector);
     Few issues worth mentioning:
     - do nothing in constructors, only in begin() as crashed the photon couple of time (red light)
     - pass global objects using obj address, not full object as doing a shadow copy and this mess up object local values
+	- REMINDER: NO DELAY IN ISR 
 */
 
 
@@ -146,6 +146,7 @@ Timer t(5000, onTimerElapsed);
 */
 void setup() 
 {	
+	// todo: need to use a hash table rather than this trick as need to have id such as "TMP"
 	measures[TEMPERATURE_MEASURE_ID] = &temperatureMeasure;
 	measures[HUMIDITY_MEASURE_ID] = &humidityMeasure;
 	measures[PRESSURE_MEASURE_ID] = &pressureMeasure;
@@ -183,7 +184,7 @@ void setup()
 	t.start();
 
 	dataCollectorManager.Collect(onMeasureCollectionDone);
-	Particle.publish("event", "Setup completed");
+	Particle.publish("events.photon.setup", "done");
 }
 
 /*
