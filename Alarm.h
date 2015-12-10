@@ -4,7 +4,7 @@
 class Alarm
 {
 public:
-	Alarm(int buzzerPin, Adafruit_SSD1306 * display);
+	Alarm(int buzzerPin, Adafruit_ILI9341 * display);
 	void Init(MeasureMeta** measures);
 	void CheckForAlerts();
 	void TriggerAlarm();
@@ -14,7 +14,7 @@ public:
 
 private:
 	int _buzzerPin;
-	Adafruit_SSD1306 * _display;
+	Adafruit_ILI9341 * _display;
 	MeasureMeta ** _measures;
 	bool _isOn = false;
 };

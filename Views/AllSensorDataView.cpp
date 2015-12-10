@@ -1,4 +1,4 @@
-#include "Adafruit_SSD1306\Adafruit_SSD1306.h"
+#include "Adafruit_ILI9341\Adafruit_ILI9341.h"
 #include "Adafruit_BME280\Adafruit_BME280.h"
 #include "../DataCollection.h"
 #include "AllSensorDataView.h"
@@ -14,11 +14,11 @@ AllSensorDataView::AllSensorDataView(MeasureMeta** measures) : _measures(measure
     /* remember to be extra careful here, had some crashes on photon when doing some init things here */
 }
 
-void AllSensorDataView::begin(Adafruit_SSD1306 * gfx)
+void AllSensorDataView::begin(Adafruit_ILI9341 * gfx)
 {
 }
 
-void displayTemplate(Adafruit_SSD1306 * gfx)
+void displayTemplate(Adafruit_ILI9341 * gfx)
 {
     gfx->clearDisplay(); 
     gfx->setCursor(0,0);
@@ -63,7 +63,7 @@ void displayTemplate(Adafruit_SSD1306 * gfx)
 //    gfx->display();
 }
 
-void AllSensorDataView::display(Adafruit_SSD1306 * display)
+void AllSensorDataView::display(Adafruit_ILI9341 * display)
 {
     display->clearDisplay();
  
@@ -71,8 +71,8 @@ void AllSensorDataView::display(Adafruit_SSD1306 * display)
  
     if (showHeartbeat)
     {
-        display->drawRect(122, 1, 2, 2, WHITE);
-        display->display();
+        display->drawRect(122, 1, 2, 2, ILI9341_WHITE);
+        //display->display();
     }
 
     display->setCursor(0,10);
@@ -95,16 +95,16 @@ void AllSensorDataView::display(Adafruit_SSD1306 * display)
     display->setTextSize(2);
     display->println(String::format("%4.0f", _measures[PRESSURE_MEASURE_ID]->latestValue));
     
-    display->fillRoundRect(124, 1, 2, 2, 0, WHITE);
+    display->fillRoundRect(124, 1, 2, 2, 0, ILI9341_WHITE);
     
-    display->display();
+    //display->display();
     
     if (showHeartbeat)
     {
         delay(500);
-        display->drawRect(124, 1, 2, 2, BLACK);
-        display->drawRect(122, 1, 2, 2, BLACK);
-        display->display();
+        display->drawRect(124, 1, 2, 2, ILI9341_BLACK);
+        display->drawRect(122, 1, 2, 2, ILI9341_BLACK);
+        //display->display();
     }
 }
 

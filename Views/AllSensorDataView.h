@@ -6,8 +6,8 @@ class AllSensorDataView : public View
 {
     public:
         AllSensorDataView(MeasureMeta** measures);
-        void begin(Adafruit_SSD1306 * gfx);
-        void display(Adafruit_SSD1306 * gfx);
+        void begin(Adafruit_ILI9341 * gfx);
+        void display(Adafruit_ILI9341 * gfx);
 	private:
 		MeasureMeta** _measures;
 };

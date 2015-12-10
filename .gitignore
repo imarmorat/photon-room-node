@@ -1,6 +1,8 @@
 #libs
 Adafruit_BME280
 Adafruit_SSD1306
+Adafruit_ILI9341
+Adafruit_mfGFX
 
 # Compiled Object files
 *.slo

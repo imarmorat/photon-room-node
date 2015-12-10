@@ -7,7 +7,7 @@
 class SplashView : public View
 {
     public:
-        void display(Adafruit_SSD1306 * display);
+        void display(Adafruit_ILI9341 * display);
 };
 
 #endif

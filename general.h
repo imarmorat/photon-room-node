@@ -1,6 +1,7 @@
 #ifndef _GENERAL_H
 #define _GENERAL_H
 
+#define PLATFORM_ID 6
 #include "application.h"
 
 #define TEMPERATURE_MEASURE_ID	0

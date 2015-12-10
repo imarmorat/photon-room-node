@@ -12,9 +12,11 @@ DataCollectorManager::DataCollectorManager(int8_t collectionIndicatorPin)
 
 void DataCollectorManager::Init(MeasureMeta ** measures)
 {
+	delay(500);
+	Particle.publish("debug");
+
 	pinMode(_collectionIndicatorPin, OUTPUT);
 	digitalWrite(_collectionIndicatorPin, HIGH);
-		
 	_collectors = measures;
 
 	for (int i = 0; i < MEASURE_COUNT; i ++ )

@@ -9,7 +9,7 @@ class StatView : public View
   public:
     StatViewMode Mode;
     void begin();
-    void display(Adafruit_SSD1306 * display);
+    void display(Adafruit_ILI9341 * display);
 };
 
 #endif

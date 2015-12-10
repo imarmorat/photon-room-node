@@ -1,11 +1,11 @@
-#include "Adafruit_SSD1306\Adafruit_SSD1306.h"
+#include "Adafruit_ILI9341\Adafruit_ILI9341.h"
 #include "general.h"
 #include "DataCollection.h"
 #include "Alarm.h"
 
 //#define nbMeasures sizeof(_measures)/sizeof(MeasureMeta*)
 
-Alarm::Alarm(int buzzerPin, Adafruit_SSD1306 * display)
+Alarm::Alarm(int buzzerPin, Adafruit_ILI9341 * display)
 {
 	_display = display;
 	_buzzerPin = buzzerPin;
@@ -77,7 +77,6 @@ void Alarm::DisplayAlerts()
 	_display->setCursor(0, 0);
 	_display->setTextSize(3);
 	_display->println("ALERT!!");
-	_display->display();
 
 	// todo: display useful information
 }

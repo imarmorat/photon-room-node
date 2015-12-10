@@ -2,12 +2,21 @@
 #include "..\Adafruit_BME280\Adafruit_BME280.h"
 #include "Bme280DataCollector.h"
 
+static bool _isInitialized = false;
+
 Bme280DataCollector::Bme280DataCollector(Adafruit_BME280 * bme) : _bme(bme)
 {
 }
 
 void Bme280DataCollector::Init()
 {
+	if (_isInitialized)
+		return;
+
+	delay(500);
+	Particle.publish("event", "bme init");
+	delay(500);
+
 	bool result = _bme->begin();
 	if (!_bme->begin())
 	{
@@ -15,7 +24,7 @@ void Bme280DataCollector::Init()
 		while (1) { Particle.process(); };
 	}
 
-	_currentValue = Collect();
+	_isInitialized = true;
 }
 
 float Bme280DataCollector::Collect()

@@ -5,7 +5,7 @@
 
 class View{
     public:
-        virtual void display(Adafruit_SSD1306 * display);
+        virtual void display(Adafruit_ILI9341 * display);
 		virtual Action handleInput(BoardInput input)
 		{
 			// defaut behaviour
