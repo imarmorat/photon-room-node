@@ -9,11 +9,31 @@
 #define PRESSURE_MEASURE_ID	2
 #define MEASURE_COUNT 3
 
-enum Action { 
+enum Action {
 	Action_None = 0,
 	Action_SwitchToNextView = 1,
-	Action_StopAlarm = 2,
-	Action_RefreshView = 3
+	Action_RefreshView = 3,
+
+	//
+	// User (button) or Software (levels are now within normal range) cancel the alarm
+	Event_StopAlarmRequested = 2,
+
+	//
+	// levels are out of range triggering the alarms
+	Event_AlarmTriggered = 5,
+
+	//
+	// The alarm is now cancelled
+	Event_AlarmStopped = 4,
+
+	//
+	Event_MeasureCollectionStarted = 10,
+	Event_MeasureCollectionCompleted = 11,
+
+	//
+	// buttons
+	Event_Button1Pressed = 20,
+	Event_Button2Pressed = 21
 };
 
 enum BoardInput : int8_t {

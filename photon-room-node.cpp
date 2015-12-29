@@ -7,10 +7,14 @@
 
 #include "Sensors\Bme280DataCollector.h"
 #include "Sensors\AnalogDataCollector.h"
-#include "Views\AllSensorDataView.h"
-#include "Views\StatView.h"
-#include "Views\View.h"
-#include "Views\SplashView.h"
+#include "Views\AllSensorDataComponent.h"
+#include "Views\AllSensorDataComponent2.h"
+#include "Views\StatComponent.h"
+#include "Views\HeaderComponent.h"
+#include "Views\FooterComponent.h"
+#include "Views\Component.h"
+#include "Views\Container.h"
+#include "Views\SplashComponent.h"
 #include "DataCollection.h"
 #include "Alarm.h"
 #include "MeasureDefinitions.h"
@@ -24,33 +28,30 @@ BME definitions
 #define BME_CS D6
 #define SEALEVELPRESSURE_HPA (1013.25)
 
-
 /*
 General declarations
 */
 Adafruit_ILI9341 display = Adafruit_ILI9341(A2, D6, A1);
+Adafruit_BME280 bme;
 DataCollectorManager dataCollectorManager(D7);
 Alarm alarm(D4, &display);
 MeasureMeta** measures = (MeasureMeta**)malloc(3 * sizeof(MeasureMeta*));
 
+Action actionToDo;
+
 /*
 Views declarations
 */
-SplashView splashView;
-StatView statsView;
-AllSensorDataView overallSensorDataView(measures);
-
-#define VIEW_COUNT 3
-View* views[VIEW_COUNT];
-volatile int currentViewIndex;
-
-Action actionToDo;
-
-
-Adafruit_BME280 bme;
+Container container;
+HeaderComponent headerComponent;
+FooterComponent footerComponent;
+SplashComponent splashComponent;
+StatComponent statsComponent;
+AllSensorDataComponent overallSensorDataComponent(measures);
+AllSensorDataComponent2 overallSensorDataComponent2(measures);
 
 TemperatureDataCollector tempDataCollector(&bme);
-BoundariesMeasureCheck temperatureWarningBoundaries = BoundariesMeasureCheck(10.0, 25.0);
+BoundariesMeasureCheck temperatureWarningBoundaries = BoundariesMeasureCheck(10.0, 26.0);
 BoundariesMeasureCheck temperatureCriticalBoundaries = BoundariesMeasureCheck(0.0, 40.0);
 MeasureMeta temperatureMeasure = MeasureMeta(
 	1,
@@ -78,48 +79,27 @@ Few issues worth mentioning:
 - REMINDER: NO DELAY IN ISR
 */
 
-
-void switchView()
-{
-	noInterrupts();
-
-	currentViewIndex++;
-	if (currentViewIndex >= VIEW_COUNT)
-		currentViewIndex = 0;
-
-	display.setRotation(1);
-	views[currentViewIndex]->display(&display);
-
-	interrupts();
-}
-
-void refreshView()
-{
-	display.setRotation(1);
-	views[currentViewIndex]->display(&display);
-}
-
 void onButton1Pressed()
 {
 	digitalWrite(D4, HIGH);
-	actionToDo = views[currentViewIndex]->handleInput(BoardInput_Button1);
+	actionToDo = Event_Button1Pressed;
 	digitalWrite(D4, LOW);
 }
 
 void onButton2Pressed()
 {
-	actionToDo = views[currentViewIndex]->handleInput(BoardInput_Button2);
+	digitalWrite(D4, HIGH);
+	actionToDo = Event_Button2Pressed;
+	digitalWrite(D4, LOW);
 }
 
 void stopAlarm()
 {
 	noInterrupts();
-
 	alarm.DisableAlarm();
-
 	interrupts();
 
-	refreshView();
+	actionToDo = Event_AlarmStopped;
 }
 
 void onMeasureCollectionDone(MeasureMeta * measure)
@@ -128,7 +108,7 @@ void onMeasureCollectionDone(MeasureMeta * measure)
 
 	alarm.CheckForAlerts();
 	if (!alarm.IsTriggered())
-		actionToDo = Action_RefreshView;
+		actionToDo = Event_MeasureCollectionCompleted;
 
 	interrupts();
 }
@@ -136,6 +116,7 @@ void onMeasureCollectionDone(MeasureMeta * measure)
 void onTimerElapsed()
 {
 	// collect
+	actionToDo = Event_MeasureCollectionStarted;
 	dataCollectorManager.Collect(onMeasureCollectionDone);
 }
 
@@ -156,18 +137,16 @@ void setup()
 	// Displpay init
 	display.begin();
 	display.fillScreen(ILI9341_BLACK);
-	display.setRotation(1);
+	display.setRotation(3);
 
 	//
 	// Views init
-	views[0] = &splashView;
-	views[1] = &overallSensorDataView;
-	views[2] = &statsView;
-	currentViewIndex = 0;
+	container.setHeader(&headerComponent);
+	container.setFooter(&footerComponent);
+	container.addView(&splashComponent);
+	container.addView(&overallSensorDataComponent2);
+	container.init(&display);
 
-	//
-	// Shows splash view
-	views[currentViewIndex]->display(&display);
 	delay(5000);
 
 	//
@@ -191,15 +170,18 @@ PHOTON LOOP
 void loop()
 {
 	delay(100);
+	//Particle.publish("action", String::format("%d", actionToDo));
 	switch (actionToDo)
 	{
-	case Action_None: break;
-	case Action_SwitchToNextView: switchView(); break;
-	case Action_StopAlarm: stopAlarm(); break;
-	case Action_RefreshView: refreshView(); break;
+		case Action_None: break;
+		case Event_StopAlarmRequested:
+			stopAlarm(); 
+			break;
+		default: 
+			// anything that is not handled by the loop code is propagated to the container
+			actionToDo = container.handleEvent(actionToDo);
+			break;
 	}
-
-	actionToDo = Action_None;
 }
 
 
