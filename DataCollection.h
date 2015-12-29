@@ -18,19 +18,21 @@ public:
 	int Id;
 	bool canRaiseAlarm;
 	float latestValue;
+	String format;
 
 	//
 	// some stats
 	float dayMin;
 	float dayMax;
+	float progressBarMin; float progressBarMax;
 	unsigned long timeOfSampling;
 
 	MeasureZone latestLevel;
 
 	//
 	// Constructor
-	MeasureMeta(int id,  MeasureCheck * warning,  MeasureCheck * error, IDataCollector * dataCollector) :
-		Id(id), DataCollector(dataCollector)
+	MeasureMeta(int id,  MeasureCheck * warning,  MeasureCheck * error, IDataCollector * dataCollector, String fmt) :
+		Id(id), DataCollector(dataCollector), format(fmt)
 	{
 		WarningCheck = warning;
 		ErrorCheck = error;
@@ -39,7 +41,7 @@ public:
 
 	//
 	// Constructor - no measure checks will be performed
-	MeasureMeta(int id, IDataCollector * dataCollector) : Id(id), DataCollector(dataCollector)
+	MeasureMeta(int id, IDataCollector * dataCollector, String fmt) : Id(id), DataCollector(dataCollector), format(fmt)
 	{
 		canRaiseAlarm = true;
 		WarningCheck = new NoMeasureCheck();

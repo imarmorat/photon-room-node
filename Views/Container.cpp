@@ -85,6 +85,4 @@ void Container::switchView()
 		currentView = 0;
 
 	_views[currentView]->display();
-	//_header->display();
-	//_footer->display();
 }

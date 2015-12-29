@@ -47,23 +47,30 @@ HeaderComponent headerComponent;
 FooterComponent footerComponent;
 SplashComponent splashComponent;
 StatComponent statsComponent;
-AllSensorDataComponent overallSensorDataComponent(measures);
-AllSensorDataComponent2 overallSensorDataComponent2(measures);
 
 TemperatureDataCollector tempDataCollector(&bme);
-BoundariesMeasureCheck temperatureWarningBoundaries = BoundariesMeasureCheck(10.0, 26.0);
+BoundariesMeasureCheck temperatureWarningBoundaries = BoundariesMeasureCheck(10.0, 29.0);
 BoundariesMeasureCheck temperatureCriticalBoundaries = BoundariesMeasureCheck(0.0, 40.0);
 MeasureMeta temperatureMeasure = MeasureMeta(
 	1,
 	&temperatureWarningBoundaries, // warning
 	&temperatureCriticalBoundaries, // error
-	&tempDataCollector);
+	&tempDataCollector,
+	"%2.1fC");
+
 
 HumidityDataCollector humidityDataCollector(&bme);
-MeasureMeta humidityMeasure = MeasureMeta(2, &humidityDataCollector);
+MeasureMeta humidityMeasure = MeasureMeta(2, &humidityDataCollector, "%2.1f");
+
 
 PressureDataCollector pressureDataCollector(&bme);
-MeasureMeta pressureMeasure = MeasureMeta(3, &pressureDataCollector);
+MeasureMeta pressureMeasure = MeasureMeta(3, &pressureDataCollector, "%4.0f");
+
+
+AllSensorDataComponent2 temperatureView(&temperatureMeasure);
+AllSensorDataComponent2 humidityView(&humidityMeasure);
+AllSensorDataComponent2 pressureView(&pressureMeasure);
+
 
 //AnalogDataCollector mq2GasSensor(D3);
 //MeasureMeta mq2Measure = MeasureMeta(
@@ -131,6 +138,12 @@ void setup()
 	measures[TEMPERATURE_MEASURE_ID] = &temperatureMeasure;
 	measures[HUMIDITY_MEASURE_ID] = &humidityMeasure;
 	measures[PRESSURE_MEASURE_ID] = &pressureMeasure;
+	temperatureMeasure.progressBarMin = 5;
+	temperatureMeasure.progressBarMax = 35;
+	humidityMeasure.progressBarMin = 0;
+	humidityMeasure.progressBarMax = 100;
+	pressureMeasure.progressBarMin = 1000;
+	pressureMeasure.progressBarMax = 1200;
 	//measures[3] = &mq2Measure;
 
 	//
@@ -144,7 +157,9 @@ void setup()
 	container.setHeader(&headerComponent);
 	container.setFooter(&footerComponent);
 	container.addView(&splashComponent);
-	container.addView(&overallSensorDataComponent2);
+	container.addView(&temperatureView);
+	container.addView(&humidityView);
+	container.addView(&pressureView);
 	container.init(&display);
 
 	delay(5000);

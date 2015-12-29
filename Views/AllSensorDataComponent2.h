@@ -5,10 +5,13 @@
 class AllSensorDataComponent2 : public Component
 {
     public:
-		AllSensorDataComponent2(MeasureMeta** measures);
+		AllSensorDataComponent2(MeasureMeta* measure);
         void display();
+		Action handleEvent(Action action);
+		void refresh();
+
 	private:
-		MeasureMeta** _measures;
+		MeasureMeta* _measure;
 };
 
 #endif

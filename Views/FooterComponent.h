@@ -8,7 +8,7 @@ class FooterComponent : public Component
 {
 public:
 	//uint16_t x, y, height, width;
-	Container * parentContainer;
+	//Container * parentContainer;
 
 	FooterComponent();
 	void display();

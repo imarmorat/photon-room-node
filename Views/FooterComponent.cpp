@@ -20,8 +20,8 @@ void FooterComponent::display()
 
 Action FooterComponent::handleEvent(Action action)
 {
-	if (action != Action_SwitchToNextView)
-		return Action_None;
+	//if (action != Action_SwitchToNextView)
+	//	return Action_None;
 
 	drawViewBar();
 	return Action_None;
