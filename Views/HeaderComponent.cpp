@@ -20,6 +20,16 @@ void displayDataCollectionIndicator(Adafruit_ILI9341 * display, int padding, boo
 	display->fillRect(320 - padding - 5, padding, 5, 5, isOn ? FOREGROUND_COLOR : BACKGROUND_COLOR);
 }
 
+void displayWifiStatus(Adafruit_ILI9341 * display)
+{
+	bool isReady = WiFi.ready();
+	int signalQuality = WiFi.RSSI(); // returns a value between -127 and -1
+	float signalInPercent = 100.0 * (signalQuality + 127.0) / (127.0 - 1.0);
+
+	display->setCursor(200, 3);
+	display->println(isReady ? String::format("%3.0f", signalInPercent) : "N/A");
+}
+
 
 HeaderComponent::HeaderComponent()
 {
@@ -34,7 +44,7 @@ void HeaderComponent::display()
 	_display->fillRect(x, y, width, height, BACKGROUND_COLOR);
 	displayTime(_display, 3, x, y);
 	displayDataCollectionIndicator(_display, 3, true);
-
+	displayWifiStatus(_display);
 	// wifi signal + connection status
 	// time
 	// nb of errors and warning
@@ -44,6 +54,7 @@ void HeaderComponent::display()
 Action HeaderComponent::handleEvent(Action action)
 {
 	displayTime(_display, 3, x, y);
+	displayWifiStatus(_display);
 
 	if (action == Event_MeasureCollectionStarted)
 		displayDataCollectionIndicator(_display, 3, true);

@@ -5,6 +5,10 @@
 #include "Adafruit_BME280\Adafruit_BME280.h"
 #include "Adafruit_BME280\Adafruit_Sensor.h"
 
+#include "Views\icons\humidity-icon-64.h"
+#include "Views\icons\temperature-icon-64.h"
+#include "Views\icons\pressure-icon-64.h"
+
 #include "Sensors\Bme280DataCollector.h"
 #include "Sensors\AnalogDataCollector.h"
 #include "Views\AllSensorDataComponent.h"
@@ -18,6 +22,7 @@
 #include "DataCollection.h"
 #include "Alarm.h"
 #include "MeasureDefinitions.h"
+#include "queue.h"
 
 /*
 BME definitions
@@ -37,7 +42,8 @@ DataCollectorManager dataCollectorManager(D7);
 Alarm alarm(D4, &display);
 MeasureMeta** measures = (MeasureMeta**)malloc(3 * sizeof(MeasureMeta*));
 
-Action actionToDo;
+//Action actionToDo;
+QueueList<Action> actionsQueue;
 
 /*
 Views declarations
@@ -88,16 +94,24 @@ Few issues worth mentioning:
 
 void onButton1Pressed()
 {
+	noInterrupts();
+
 	digitalWrite(D4, HIGH);
-	actionToDo = Event_Button1Pressed;
+	actionsQueue.push(Event_Button1Pressed);
 	digitalWrite(D4, LOW);
+
+	interrupts();
 }
 
 void onButton2Pressed()
 {
+	noInterrupts();
+
 	digitalWrite(D4, HIGH);
-	actionToDo = Event_Button2Pressed;
+	actionsQueue.push(Event_Button2Pressed);
 	digitalWrite(D4, LOW);
+
+	interrupts();
 }
 
 void stopAlarm()
@@ -105,8 +119,7 @@ void stopAlarm()
 	noInterrupts();
 	alarm.DisableAlarm();
 	interrupts();
-
-	actionToDo = Event_AlarmStopped;
+	actionsQueue.push(Event_AlarmStopped);
 }
 
 void onMeasureCollectionDone(MeasureMeta * measure)
@@ -115,7 +128,7 @@ void onMeasureCollectionDone(MeasureMeta * measure)
 
 	alarm.CheckForAlerts();
 	if (!alarm.IsTriggered())
-		actionToDo = Event_MeasureCollectionCompleted;
+		actionsQueue.push(Event_MeasureCollectionCompleted);
 
 	interrupts();
 }
@@ -123,7 +136,7 @@ void onMeasureCollectionDone(MeasureMeta * measure)
 void onTimerElapsed()
 {
 	// collect
-	actionToDo = Event_MeasureCollectionStarted;
+	actionsQueue.push(Event_MeasureCollectionStarted);
 	dataCollectorManager.Collect(onMeasureCollectionDone);
 }
 
@@ -138,12 +151,25 @@ void setup()
 	measures[TEMPERATURE_MEASURE_ID] = &temperatureMeasure;
 	measures[HUMIDITY_MEASURE_ID] = &humidityMeasure;
 	measures[PRESSURE_MEASURE_ID] = &pressureMeasure;
+
 	temperatureMeasure.progressBarMin = 5;
 	temperatureMeasure.progressBarMax = 35;
+	temperatureMeasure.iconHeight = temperatureIcon_height;
+	temperatureMeasure.iconWidth = temperatureIcon_width;
+	temperatureMeasure.iconData = &temperatureIcon[0];
+
 	humidityMeasure.progressBarMin = 0;
 	humidityMeasure.progressBarMax = 100;
+	humidityMeasure.iconHeight = humidityIcon_height;
+	humidityMeasure.iconWidth = humidityIcon_width;
+	humidityMeasure.iconData = &humidityIcon[0];
+
 	pressureMeasure.progressBarMin = 1000;
 	pressureMeasure.progressBarMax = 1200;
+	pressureMeasure.iconHeight = pressureIcon_height;
+	pressureMeasure.iconWidth = pressureIcon_width;
+	pressureMeasure.iconData = &pressureIcon[0];
+
 	//measures[3] = &mq2Measure;
 
 	//
@@ -162,7 +188,7 @@ void setup()
 	container.addView(&pressureView);
 	container.init(&display);
 
-	delay(5000);
+	//delay(5000);
 
 	//
 	// Interruptions setup
@@ -173,7 +199,8 @@ void setup()
 
 	alarm.Init(measures);
 
-	actionToDo = Action_SwitchToNextView;
+	actionsQueue.push(Action_SwitchToNextView);
+	
 	dataCollectorManager.Init(measures);
 	Particle.publish("events.photon.setup", "done");
 	t.start();
@@ -185,7 +212,11 @@ PHOTON LOOP
 void loop()
 {
 	delay(100);
-	//Particle.publish("action", String::format("%d", actionToDo));
+	if (actionsQueue.isEmpty())
+		return;
+
+	Action actionToDo = actionsQueue.pop();
+
 	switch (actionToDo)
 	{
 		case Action_None: break;

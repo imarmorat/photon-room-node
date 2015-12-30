@@ -78,8 +78,6 @@ void Container::refresh()
 
 void Container::switchView()
 {
-	Particle.publish("debug", String::format("switching view %d %d", currentView, viewCount));
-
 	currentView++;
 	if (currentView >= viewCount)
 		currentView = 0;
