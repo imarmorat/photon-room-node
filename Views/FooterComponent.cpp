@@ -29,15 +29,26 @@ Action FooterComponent::handleEvent(Action action)
 
 void FooterComponent::drawViewBar()
 {
-	uint8_t padding = 3;
-	uint16_t start = (this->width - (parentContainer->viewCount * padding)) / 2;
-	uint8_t h = this->height - (padding * 2);
+	// TODO: these calculations should be done in constructor
+
+	int horizontalPadding = 10;
+	int verticalPadding = 2;
+	int indicatorSize = 10; // this->height - (verticalPadding * 2);
+
+	int containerWidth = parentContainer->viewCount * indicatorSize + horizontalPadding * (parentContainer->viewCount - 1);
+	int startX = x + (width - containerWidth) / 2;
+	int startY = y + height / 2;
 
 	for (int i = 0; i < parentContainer->viewCount; i++)
-		_display->fillRect(
-			x + start + (i*(h + padding)),
-			y + padding,
-			h,
-			h,
-			i == parentContainer->currentView ? VIEW_CURRENT_COLOR : VIEW_NORMAL_COLOR);
+	{
+		bool isCurrentView = (i == parentContainer->currentView);
+		int ih = indicatorSize * (isCurrentView ? 1 : 0.5) / 2;
+		int ix = startX + indicatorSize / 2 + i * (indicatorSize + horizontalPadding);
+
+		if (!isCurrentView)
+			// because the indicator for non current view is smaller, we clear the area
+			_display->fillRect(ix - indicatorSize/2, startY - indicatorSize/2, indicatorSize, indicatorSize, ILI9341_BLACK);
+
+		_display->fillRect(ix - ih, startY - ih, ih * 2, ih * 2, isCurrentView ? VIEW_CURRENT_COLOR : VIEW_NORMAL_COLOR);
+	}
 }

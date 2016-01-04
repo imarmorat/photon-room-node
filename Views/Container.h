@@ -6,8 +6,8 @@ class Component;
 class Container
 {
 public:
-	uint8_t height;
-	uint8_t width;
+	int height;
+	int width;
 
 	void init(Adafruit_ILI9341 * display);
 	void refresh();
@@ -19,8 +19,8 @@ public:
 
 	Action handleEvent(Action action);
 
-	uint8_t	viewCount;
-	uint8_t	currentView;
+	int viewCount;
+	int currentView;
 
 private:
 	Adafruit_ILI9341 * _display;

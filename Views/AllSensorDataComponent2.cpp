@@ -74,6 +74,7 @@ void AllSensorDataComponent2::refresh()
 	float min = _measure->progressBarMin; float max = _measure->progressBarMax; float value = _measure->latestValue;
 	float angle = 2 * PI * (value - min) / (max - min);
 
+
 	CircleProgressBar_draw(_display, xc, yc, inner, outer, -1, 0x0210, angle);
 	//CircleProgressBar_draw(_display, xc, yc, inner, outer, 0x1082, 0x0210, angle);
 

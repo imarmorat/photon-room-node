@@ -7,9 +7,6 @@
 class FooterComponent : public Component
 {
 public:
-	//uint16_t x, y, height, width;
-	//Container * parentContainer;
-
 	FooterComponent();
 	void display();
 	Action handleEvent(Action event);
