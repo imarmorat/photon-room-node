@@ -61,7 +61,10 @@ Action Container::handleEvent(Action action)
 		switch (action)
 		{
 			case Action_None: break;
-			case Event_Button1Pressed: switchView(); break;
+			case Event_Button1Pressed: 
+			case Action_SwitchToNextView:
+				switchView(); 
+				break;
 		}
 	}
 
@@ -72,7 +75,6 @@ Action Container::handleEvent(Action action)
 
 void Container::refresh()
 {
-	_display->setRotation(1);
 	_views[currentView]->display();
 }
 

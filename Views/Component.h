@@ -20,8 +20,6 @@ class Component{
 
 		virtual Action handleEvent(Action event)
 		{
-			// defaut behaviour
-			//return event ==  ? Action_SwitchToNextView : Action_None;
 			return Action_None;
 		};
 

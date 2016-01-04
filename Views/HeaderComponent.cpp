@@ -10,7 +10,7 @@
 void displayTime(Adafruit_ILI9341 * display, int padding, int x, int y)
 {
 	display->setCursor(x + padding, y + padding);
-	display->setTextSize(1);
+	display->setTextSize(2);
 	display->setTextColor(FOREGROUND_COLOR, BACKGROUND_COLOR);
 	display->println(Time.format(Time.now(), "%H:%M %a %d-%b"));
 }
@@ -45,10 +45,7 @@ void HeaderComponent::display()
 	displayTime(_display, 3, x, y);
 	displayDataCollectionIndicator(_display, 3, true);
 	displayWifiStatus(_display);
-	// wifi signal + connection status
-	// time
 	// nb of errors and warning
-	// data collecction indicator
 }
 
 Action HeaderComponent::handleEvent(Action action)

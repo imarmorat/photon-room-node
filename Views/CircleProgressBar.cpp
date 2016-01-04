@@ -6,11 +6,17 @@
 
 void xLine(Adafruit_ILI9341 * _display, int x1, int x2, int y, int16_t colour)
 {
+	if (colour == -1)
+		return;
+
 	while (x1 <= x2) _display->drawPixel(x1++, y, colour);
 }
 
 void yLine(Adafruit_ILI9341 * _display, int x, int y1, int y2, int16_t colour)
 {
+	if (colour == -1)
+		return;
+
 	while (y1 <= y2) _display->drawPixel(x, y1++, colour);
 }
 
@@ -38,17 +44,29 @@ void CircleProgressBar_draw(Adafruit_ILI9341 * _display,  int xc, int yc, int in
 			int xbound = xc - y*tan(angle);
 			int ybound = yc + y / tan(angle);
 
-			if (xbound <= (xc - xo) && xbound <= (xc - xi))
+			if ( xbound <= (xc - xo) && xbound <= (xc - xi))
 				xLine(_display, xc - xo, xc - xi, yc + y, foregroundColor);
 
+			if (xbound > xc - xi) 
+				xLine(_display, xc - xo, xc - xi, yc + y, backgroundColor);
+
 			if (xbound >= (xc - xo) && xbound <= (xc - xi))
-				xLine(_display,xbound, xc - xi, yc + y, foregroundColor);
+			{
+				xLine(_display, xc - xo, xbound, yc + y, backgroundColor);
+				xLine(_display, xbound, xc - xi, yc + y, foregroundColor);
+			}
 
 			if (ybound <= (yc + xo) && ybound <= (yc + xi))
 				yLine(_display,xc - y, yc + xi, yc + xo, foregroundColor);
 
+			if (ybound > yc + xo)
+				yLine(_display, xc - y, yc + xi, yc + xo, backgroundColor);
+
 			if (ybound <= (yc + xo) && ybound >= (yc + xi))
-				yLine(_display,xc - y, ybound, yc + xo, foregroundColor);
+			{
+				yLine(_display, xc - y, yc + xi, ybound, backgroundColor);
+				yLine(_display, xc - y, ybound, yc + xo, foregroundColor);
+			}
 		}
 		else
 		{
@@ -74,14 +92,26 @@ void CircleProgressBar_draw(Adafruit_ILI9341 * _display,  int xc, int yc, int in
 			if (xbound <= (xc + xi) && xbound <= (xc + xo))
 				xLine(_display,xc + xi, xc + xo, yc + y, foregroundColor);
 
-			if (xbound >= (xc + xi) && xbound <= (xc + xo))
-				xLine(_display,xbound, xc + xo, yc + y, foregroundColor);
+			if (xbound > xc + xo)
+				xLine(_display, xc + xi, xc + xo, yc + y, backgroundColor);
 
+			if (xbound >= (xc + xi) && xbound <= (xc + xo))
+			{
+				xLine(_display, xc + xi, xbound, yc + y, backgroundColor);
+				xLine(_display, xbound, xc + xo, yc + y, foregroundColor);
+			}
+			
 			if (ybound >= (yc + xo) && ybound >= (yc + xi))
 				yLine(_display,xc + y, yc + xi, yc + xo, foregroundColor);
 
+			if (ybound < yc + xi)
+				yLine(_display, xc + y, yc + xi, yc + xo, backgroundColor);
+
 			if (ybound <= (yc + xo) && ybound >= (yc + xi))
-				yLine(_display,xc + y, yc + xi, ybound, foregroundColor);
+			{
+				yLine(_display, xc + y, ybound, yc + xo, backgroundColor);
+				yLine(_display, xc + y, yc + xi, ybound, foregroundColor);
+			}
 		}
 		else
 		{
@@ -107,14 +137,26 @@ void CircleProgressBar_draw(Adafruit_ILI9341 * _display,  int xc, int yc, int in
 			if (xbound >= (xc - xi) && xbound >= (xc - xo))
 				xLine(_display,xc - xo, xc - xi, yc - y, foregroundColor);
 
+			if (xbound < xc - xo)
+				xLine(_display, xc - xo, xc - xi, yc - y, backgroundColor);
+
 			if (xbound >= (xc - xo) && xbound <= (xc - xi))
-				xLine(_display,xc - xo, xbound, yc - y, foregroundColor);
+			{
+				xLine(_display, xbound, xc - xi, yc - y, backgroundColor);
+				xLine(_display, xc - xo, xbound, yc - y, foregroundColor);
+			}
 
 			if (ybound <= (yc - xo) && ybound <= (yc - xi))
 				yLine(_display,xc - y, yc - xo, yc - xi, foregroundColor);
 
+			if (ybound > yc - xi)
+				yLine(_display, xc - y, yc - xo, yc - xi, backgroundColor);
+
 			if (ybound >= (yc - xo) && ybound <= (yc - xi))
-				yLine(_display,xc - y, ybound, yc - xi, foregroundColor);
+			{
+				yLine(_display, xc - y, yc - xo, ybound, backgroundColor);
+				yLine(_display, xc - y, ybound, yc - xi, foregroundColor);
+			}
 		}
 		else
 		{
@@ -139,14 +181,26 @@ void CircleProgressBar_draw(Adafruit_ILI9341 * _display,  int xc, int yc, int in
 			if (xbound >= (xc + xi) && xbound >= (xc + xo))
 				xLine(_display,xc + xi, xc + xo, yc - y, foregroundColor);
 
+			if (xbound < xc + xi)
+				xLine(_display, xc + xi, xc + xo, yc - y, backgroundColor);
+
 			if (xbound >= (xc + xi) && xbound <= (xc + xo))
-				xLine(_display,xc + xi, xbound, yc - y, foregroundColor);
+			{
+				xLine(_display, xbound, xc + xo, yc - y, backgroundColor);
+				xLine(_display, xc + xi, xbound, yc - y, foregroundColor);
+			}
 
 			if (ybound >= (yc - xo) && ybound >= (yc - xi))
 				yLine(_display,xc + y, yc - xo, yc - xi, foregroundColor);
 
+			if (ybound < yc - xo)
+				yLine(_display, xc + y, yc - xo, yc - xi, backgroundColor);
+
 			if (ybound >= (yc - xo) && ybound <= (yc - xi))
-				yLine(_display,xc + y, yc - xo, ybound, foregroundColor);
+			{
+				yLine(_display, xc + y, ybound, yc - xi, backgroundColor);
+				yLine(_display, xc + y, yc - xo, ybound, foregroundColor);
+			}
 		}
 		else
 		{

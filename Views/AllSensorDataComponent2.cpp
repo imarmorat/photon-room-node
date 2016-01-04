@@ -2,12 +2,12 @@
 #include "Adafruit_BME280\Adafruit_BME280.h"
 #include "../DataCollection.h"
 #include "AllSensorDataComponent2.h"
-//#include "Icon1.h"
 #include "Component.h"
 #include <math.h>
-
-#include "icons\humidity-icon-64.h"
 #include "..\utils.h"
+
+#include "icons\arrowdown-icon-24.h"
+#include "icons\arrowup-icon-24.h"
 
 #define PI 3.14159265359
 void CircleProgressBar_draw(Adafruit_ILI9341 * _display, int xc, int yc, int inner, int outer, int16_t backgroundColor, int16_t foregroundColor, float angle);
@@ -51,8 +51,17 @@ void AllSensorDataComponent2::display()
 
 Action AllSensorDataComponent2::handleEvent(Action action)
 {
-	refresh();
+	if (action == Event_MeasureCollectionCompleted)
+		refresh();
+
 	return Action_None;
+}
+
+static void drawBitmap(Adafruit_ILI9341* display, int x, int y, int height, int width, const unsigned int * bitmap)
+{
+	for (int i = 0; i < height; i++)
+		for (int j = 0; j < width; j++)
+			display->drawPixel(x + i, y + j, convertRGB888toRGB565(bitmap[i * width + j], 0));
 }
 
 void AllSensorDataComponent2::refresh()
@@ -65,26 +74,67 @@ void AllSensorDataComponent2::refresh()
 	float min = _measure->progressBarMin; float max = _measure->progressBarMax; float value = _measure->latestValue;
 	float angle = 2 * PI * (value - min) / (max - min);
 
-	CircleProgressBar_draw(_display, xc, yc, inner, outer, 0x1082, 0x0210, angle);
+	CircleProgressBar_draw(_display, xc, yc, inner, outer, -1, 0x0210, angle);
+	//CircleProgressBar_draw(_display, xc, yc, inner, outer, 0x1082, 0x0210, angle);
 
-	_display->setCursor(190, 40);
+	_display->setCursor(180, 40);
 	_display->setTextSize(4);
 	_display->setTextColor(ILI9341_WHITE, ILI9341_BLACK);
 	_display->println(String::format(_measure->format, _measure->latestValue));
+	_display->drawFastHLine(180, 75, 130, 0x1082);
 
 	_display->setTextSize(3);
-	_display->setCursor(190, 75);
+	_display->setCursor(180 + arrowupIcon_width + 3, 80);
 	_display->println(String::format(_measure->format, _measure->dayMax));
+	drawBitmap(_display, 180, 80, arrowupIcon_height, arrowupIcon_width, &arrowupIcon[0]);
 
-	_display->setCursor(190, 100);
+	_display->setCursor(180 + arrowupIcon_width + 3, 110);
 	_display->println(String::format(_measure->format, _measure->dayMin));
+	drawBitmap(_display, 180, 110, arrowdownIcon_height, arrowdownIcon_width, &arrowdownIcon[0]);
 
-	int iconX = xc - _measure->iconHeight / 2;
-	int iconY = yc - _measure->iconWidth / 2;
+	drawBitmap(_display, xc - _measure->iconHeight / 2, yc - _measure->iconWidth / 2, _measure->iconHeight, _measure->iconWidth, &_measure->iconData[0]);
+	
 
-	for (int i = 0; i < _measure->iconHeight; i++)
-		for (int j = 0; j < _measure->iconWidth; j++)
-			_display->drawPixel(iconX + i, iconY + j, convertRGB888toRGB565(_measure->iconData[i * _measure->iconWidth + j], 0));
+	//
+	// GRAPH
+	int graphX = 180;
+	int graphY = 140;
+	int graphHeight = 78;
+	int graphWidth = 130;
+	float graphMin = _measure->progressBarMin; float graphMax = _measure->progressBarMax;
+	_display->fillRect(graphX, graphY, graphWidth, graphHeight, ILI9341_BLACK);
 
+
+	// draw axis
+	_display->drawFastVLine(graphX, graphY, graphHeight, ILI9341_WHITE);
+	_display->drawFastHLine(graphX, graphY + graphHeight, graphWidth, ILI9341_WHITE);
+
+	float statsMin[24];
+	float statsAvg[24];
+	float statsMax[24];
+	float bucketCount = 24.0;
+	int bucketPixelSize = graphWidth / bucketCount;
+
+	for (int i = 0; i < bucketCount; i++)
+	{
+		statsMin[i] = (float)random(15, 20);
+		statsAvg[i] = (float)random(22, 25);
+		statsMax[i] = (float)random(25, 30);
+	}
+
+	// render graph
+	for (int i = 0; i<bucketCount; i++)
+	{
+		float minVal = graphHeight * (graphMax - statsMin[i]) / (graphMax - graphMin);
+		float avgVal = graphHeight * (graphMax - statsAvg[i]) / (graphMax - graphMin);
+		float maxVal = graphHeight * (graphMax - statsMax[i]) / (graphMax - graphMin);
+
+		for (int j = 0; j < bucketPixelSize; j++)
+		{
+			int x = (i * bucketPixelSize) + graphX +1; // +1 to not erase vertical axis
+			_display->drawFastVLine(x + j, graphY + maxVal, minVal - maxVal, 0x1082);
+			_display->drawPixel(x + j, graphY + avgVal, 0x0210);
+		}
+	}
 
 }

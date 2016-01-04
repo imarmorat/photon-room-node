@@ -41,9 +41,14 @@ Adafruit_BME280 bme;
 DataCollectorManager dataCollectorManager(D7);
 Alarm alarm(D4, &display);
 MeasureMeta** measures = (MeasureMeta**)malloc(3 * sizeof(MeasureMeta*));
-
-//Action actionToDo;
 QueueList<Action> actionsQueue;
+
+void onTimerElapsed();
+Timer t(5000, onTimerElapsed);
+
+void onAutoRotateViewTimerElapsed();
+bool isAutoRotateViewOn = false;
+Timer autoRotateViewTimer(10000, onAutoRotateViewTimerElapsed);
 
 /*
 Views declarations
@@ -54,6 +59,9 @@ FooterComponent footerComponent;
 SplashComponent splashComponent;
 StatComponent statsComponent;
 
+/*
+Measures declarations
+*/
 TemperatureDataCollector tempDataCollector(&bme);
 BoundariesMeasureCheck temperatureWarningBoundaries = BoundariesMeasureCheck(10.0, 29.0);
 BoundariesMeasureCheck temperatureCriticalBoundaries = BoundariesMeasureCheck(0.0, 40.0);
@@ -64,26 +72,15 @@ MeasureMeta temperatureMeasure = MeasureMeta(
 	&tempDataCollector,
 	"%2.1fC");
 
-
 HumidityDataCollector humidityDataCollector(&bme);
 MeasureMeta humidityMeasure = MeasureMeta(2, &humidityDataCollector, "%2.1f");
-
 
 PressureDataCollector pressureDataCollector(&bme);
 MeasureMeta pressureMeasure = MeasureMeta(3, &pressureDataCollector, "%4.0f");
 
-
 AllSensorDataComponent2 temperatureView(&temperatureMeasure);
 AllSensorDataComponent2 humidityView(&humidityMeasure);
 AllSensorDataComponent2 pressureView(&pressureMeasure);
-
-
-//AnalogDataCollector mq2GasSensor(D3);
-//MeasureMeta mq2Measure = MeasureMeta(
-//	4,
-//	BoundariesMeasureCheck(0, 100),
-//	BoundariesMeasureCheck(0, 1000),
-//	&mq2GasSensor);
 
 /*
 Few issues worth mentioning:
@@ -92,12 +89,28 @@ Few issues worth mentioning:
 - REMINDER: NO DELAY IN ISR
 */
 
+
+
 void onButton1Pressed()
 {
 	noInterrupts();
 
 	digitalWrite(D4, HIGH);
-	actionsQueue.push(Event_Button1Pressed);
+	//if (isAutoRotateViewOn)
+	//{
+	//	// if the user presses button1 while in auto rotate mode, the rotation is cancelled
+	//	autoRotateViewTimer.stop();
+	//	isAutoRotateViewOn = false;
+	//}
+	//else
+	//{
+	//	autoRotateViewTimer.start();
+	//	isAutoRotateViewOn = true;
+	//}
+	
+	if (actionsQueue.peek() != Event_Button1Pressed)
+		actionsQueue.push(Event_Button1Pressed);
+	
 	digitalWrite(D4, LOW);
 
 	interrupts();
@@ -108,7 +121,8 @@ void onButton2Pressed()
 	noInterrupts();
 
 	digitalWrite(D4, HIGH);
-	actionsQueue.push(Event_Button2Pressed);
+	if (actionsQueue.peek() != Event_Button2Pressed)
+		actionsQueue.push(Event_Button2Pressed);
 	digitalWrite(D4, LOW);
 
 	interrupts();
@@ -125,11 +139,7 @@ void stopAlarm()
 void onMeasureCollectionDone(MeasureMeta * measure)
 {
 	noInterrupts();
-
 	alarm.CheckForAlerts();
-	if (!alarm.IsTriggered())
-		actionsQueue.push(Event_MeasureCollectionCompleted);
-
 	interrupts();
 }
 
@@ -138,9 +148,16 @@ void onTimerElapsed()
 	// collect
 	actionsQueue.push(Event_MeasureCollectionStarted);
 	dataCollectorManager.Collect(onMeasureCollectionDone);
+	actionsQueue.push(Event_MeasureCollectionCompleted);
 }
 
-Timer t(5000, onTimerElapsed);
+void onAutoRotateViewTimerElapsed()
+{
+	if (actionsQueue.peek() != Action_SwitchToNextView)
+		actionsQueue.push(Action_SwitchToNextView);
+}
+
+
 
 /*
 PHOTON SETUP
@@ -164,7 +181,7 @@ void setup()
 	humidityMeasure.iconWidth = humidityIcon_width;
 	humidityMeasure.iconData = &humidityIcon[0];
 
-	pressureMeasure.progressBarMin = 1000;
+	pressureMeasure.progressBarMin = 950;
 	pressureMeasure.progressBarMax = 1200;
 	pressureMeasure.iconHeight = pressureIcon_height;
 	pressureMeasure.iconWidth = pressureIcon_width;
@@ -198,12 +215,13 @@ void setup()
 	attachInterrupt(BoardInput_Button2, onButton2Pressed, FALLING);
 
 	alarm.Init(measures);
-
-	actionsQueue.push(Action_SwitchToNextView);
 	
 	dataCollectorManager.Init(measures);
 	Particle.publish("events.photon.setup", "done");
+	actionsQueue.push(Action_SwitchToNextView);
 	t.start();
+	autoRotateViewTimer.start(); 
+	isAutoRotateViewOn = true;
 }
 
 /*
