@@ -3,91 +3,100 @@
 #include "../DataCollection.h"
 #include "AllSensorDataComponent.h"
 #include "Component.h"
-
-// todo: I dont like having external static used here, need to get them passed through at some point
-// e.g. by passing Measures + some id
+#include "drawUtils.h"
 
 AllSensorDataComponent::AllSensorDataComponent(MeasureMeta** measures) : _measures(measures)
 {
     /* remember to be extra careful here, had some crashes on photon when doing some init things here */
 }
 
-void AllSensorDataComponent::begin(Adafruit_ILI9341 * gfx)
-{
-}
-
-void AllSensorDataComponent::displayTemplate(Adafruit_ILI9341 * gfx)
-{
-    gfx->clearDisplay(); 
-    gfx->setCursor(0 + x,0 + y);
-	gfx->setTextSize(1);
-    gfx->println("Temperature");
-  
-    gfx->setCursor(0 + x,10 + y);
-    gfx->setTextSize(3);
-    gfx->println("--.-C");
-  
-    gfx->setCursor(95,10);
-    gfx->setTextSize(1);
-    gfx->println("--.-C");
-  
-    gfx->setCursor(95,22);
-    gfx->setTextSize(1);
-    gfx->println("--.-C");
-
-    // -------------------------------
-
-    gfx->setTextSize(1);
-    gfx->setCursor(0, 34);
-    gfx->println("Humidity");
-    
-    gfx->setCursor(0,46);
-    gfx->setTextSize(2);
-    gfx->println("--.-\%");
-    
-     // -------------------------------
-    
-    gfx->setTextSize(1);
-    gfx->setCursor(64, 34);
-    gfx->println("Pressure");
-    
-    gfx->setCursor(64,46);
-    gfx->setTextSize(2);
-    gfx->println("----Pa");
-    
-//    _display.drawFastVLine(0, 33, 30, WHITE;
-//    _display.drawFastHLine(0, 63, 127, WHITE);
-
-//    gfx->_display();
-}
-
 void AllSensorDataComponent::display()
 {
-    _display->clearDisplay();
- 
-    displayTemplate(_display);
+	draw(true);
+}
 
-    _display->setCursor(0,10);
-    _display->setTextSize(3);
-    _display->println(String::format("%2.1f", _measures[TEMPERATURE_MEASURE_ID]->latestValue));
-    
-    _display->setCursor(95,10);
-    _display->setTextSize(1);
-    _display->println(String::format("%2.1f", _measures[TEMPERATURE_MEASURE_ID]->dayMax));
-  
-    _display->setCursor(95,22);
-    _display->setTextSize(1);
-    _display->println(String::format("%2.1f", _measures[TEMPERATURE_MEASURE_ID]->dayMin));
+void AllSensorDataComponent::refresh()
+{
+	draw(false);
+}
 
-    _display->setCursor(0,46);
-    _display->setTextSize(2);
-    _display->println(String::format("%2.1f", _measures[HUMIDITY_MEASURE_ID]->latestValue));
-    
-    _display->setCursor(64,46);
-    _display->setTextSize(2);
-    _display->println(String::format("%4.0f", _measures[PRESSURE_MEASURE_ID]->latestValue));
-    
-    _display->fillRoundRect(124, 1, 2, 2, 0, ILI9341_WHITE);
-   
+Action AllSensorDataComponent::handleEvent(Action action)
+{
+	if (action == Event_MeasureCollectionCompleted)
+		refresh();
+
+	return Action_None;
+}
+
+void AllSensorDataComponent::draw(bool isFirstTime)
+{
+	int nbRows = 2;
+	int nbColumns = MEASURE_COUNT / nbRows;
+
+	int boxHeight = height / nbRows;
+	int boxWidth = width / nbColumns;
+
+	if (isFirstTime)
+		_display->fillRect(x, y, width, height, convertRGB888toRGB565(0x303030, ILI9341_BLACK));
+	
+	int measureId = 0;
+	for (int i = 0; i < nbColumns; i++)
+		for (int j = 0; j < nbRows; j++)
+		{
+			displayMeasure(_display, isFirstTime, x + boxWidth * i, y + boxHeight * j, boxWidth, boxHeight, measureId < MEASURE_COUNT ? _measures[measureId] : NULL);
+			measureId++;
+		}
+}
+
+void AllSensorDataComponent::displayMeasure(Adafruit_ILI9341* display, bool isFirstTime, int x, int y, int width, int height, MeasureMeta * measure)
+{
+	if (measure == NULL)
+		return;
+
+	int nbComponents = 3; // short name, icon and value
+	int textHeight = 14; int iconHeight = 32; int charWidth = 10;
+	int padding = (height - (textHeight * 2 + iconHeight)) / (nbComponents + 1);
+
+	if (isFirstTime)
+		display->fillRect(x, y, width, height, convertRGB888toRGB565(0x050505, ILI9341_BLACK));
+	
+	int yi = y + padding;
+
+	display->setTextSize(2);
+	display->setTextColor(convertRGB888toRGB565(0x353535, ILI9341_BLACK), convertRGB888toRGB565(0x050505, ILI9341_BLACK));
+
+	// short name
+	if (isFirstTime)
+	{
+		display->setCursor(x + width / 2 - measure->shortName.length()*charWidth/2, yi);
+		display->println(measure->shortName);
+	}
+
+	// icon
+	yi += padding + textHeight;
+
+	if (isFirstTime)
+	{
+		if (measure->iconData != NULL)
+		{
+			drawBitmap(display, x + width / 2 - iconHeight / 2, yi, iconHeight, iconHeight, measure->iconData);
+		}
+		else
+		{
+			display->fillRect(x + width / 2 - iconHeight / 2, yi, iconHeight, iconHeight, ILI9341_GREEN);
+		}
+	}
+
+	// value
+	yi += padding + iconHeight;
+	
+	if (!isFirstTime)
+		// need to erase previous content as might leave leftovers
+		display->fillRect(x, yi, width, textHeight, convertRGB888toRGB565(0x050505, ILI9341_BLACK));
+	
+	String  value = String::format(measure->format, measure->latestValue);
+	display->setTextColor(ILI9341_GREEN, convertRGB888toRGB565(0x050505, ILI9341_BLACK));
+	display->setCursor(x + width / 2 - value.length()*charWidth/2, yi);
+	display->println(value);
 }
 

@@ -8,11 +8,14 @@ class AllSensorDataComponent : public Component
 {
     public:
 		AllSensorDataComponent(MeasureMeta** measures);
-        void begin(Adafruit_ILI9341 * gfx);
-        void display();
-	private:
-		MeasureMeta** _measures;
-		void displayTemplate(Adafruit_ILI9341 * gfx);
+		void display();
+		Action handleEvent(Action action);
+		void refresh();
+
+private:
+	MeasureMeta** _measures;
+	void displayMeasure(Adafruit_ILI9341* display, bool isFirstTime, int x, int y, int width, int height, MeasureMeta * measure);
+	void draw(bool isFirstTime);
 };
 
 #endif

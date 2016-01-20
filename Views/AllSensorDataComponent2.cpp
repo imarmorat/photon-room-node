@@ -5,35 +5,13 @@
 #include "Component.h"
 #include <math.h>
 #include "..\utils.h"
+#include "drawUtils.h"
 
 #include "icons\arrowdown-icon-24.h"
 #include "icons\arrowup-icon-24.h"
 
 #define PI 3.14159265359
 void CircleProgressBar_draw(Adafruit_ILI9341 * _display, int xc, int yc, int inner, int outer, int16_t backgroundColor, int16_t foregroundColor, float angle);
-
-static uint8_t getAlpha(int color) { return (color & 0xff000000) >> 24; }
-static uint8_t getRed(int color) { return (color & 0x00ff0000) >> 16; }
-static uint8_t getBlue(int color) { return (color & 0x0000ff00) >> 8; }
-static uint8_t getGreen(int color) { return (color & 0x000000ff); }
-
-static uint16_t convertRGB888toRGB565(int color, int background)
-{
-	// color is ARGB
-	//
-	// remove alpha
-	uint8_t alpha = getAlpha(color);
-	alpha = 0xff;
-	float diff = 1.0 - alpha / 255.0;
-
-	uint8_t red = (getRed(color) * (1 - diff)) + getRed(background) * diff;
-	uint8_t blue = (getBlue(color) * (1 - diff)) + getBlue(background) * diff;
-	uint8_t green = (getGreen(color) * (1 - diff)) + getGreen(background) * diff;
-
-	return (((31 * (red + 4)) / 255) << 11) | (((63 * (green + 2)) / 255) << 5) | ((31 * (blue + 4)) / 255);
-}
-
-
 
 // todo: I dont like having external static used here, need to get them passed through at some point
 // e.g. by passing Measures + some id
@@ -55,13 +33,6 @@ Action AllSensorDataComponent2::handleEvent(Action action)
 		refresh();
 
 	return Action_None;
-}
-
-static void drawBitmap(Adafruit_ILI9341* display, int x, int y, int height, int width, const unsigned int * bitmap)
-{
-	for (int i = 0; i < height; i++)
-		for (int j = 0; j < width; j++)
-			display->drawPixel(x + i, y + j, convertRGB888toRGB565(bitmap[i * width + j], 0));
 }
 
 void AllSensorDataComponent2::refresh()
@@ -98,44 +69,47 @@ void AllSensorDataComponent2::refresh()
 
 	//
 	// GRAPH
-	int graphX = 180;
-	int graphY = 140;
-	int graphHeight = 78;
-	int graphWidth = 130;
-	float graphMin = _measure->progressBarMin; float graphMax = _measure->progressBarMax;
-	_display->fillRect(graphX, graphY, graphWidth, graphHeight, ILI9341_BLACK);
-
-
-	// draw axis
-	_display->drawFastVLine(graphX, graphY, graphHeight, ILI9341_WHITE);
-	_display->drawFastHLine(graphX, graphY + graphHeight, graphWidth, ILI9341_WHITE);
-
-	float statsMin[24];
-	float statsAvg[24];
-	float statsMax[24];
-	float bucketCount = 24.0;
-	int bucketPixelSize = graphWidth / bucketCount;
-
-	for (int i = 0; i < bucketCount; i++)
+	bool showGraph = false;
+	if (showGraph)
 	{
-		statsMin[i] = (float)random(15, 20);
-		statsAvg[i] = (float)random(22, 25);
-		statsMax[i] = (float)random(25, 30);
-	}
+		int graphX = 180;
+		int graphY = 140;
+		int graphHeight = 78;
+		int graphWidth = 130;
+		float graphMin = _measure->progressBarMin; float graphMax = _measure->progressBarMax;
+		_display->fillRect(graphX, graphY, graphWidth, graphHeight, ILI9341_BLACK);
 
-	// render graph
-	for (int i = 0; i<bucketCount; i++)
-	{
-		float minVal = graphHeight * (graphMax - statsMin[i]) / (graphMax - graphMin);
-		float avgVal = graphHeight * (graphMax - statsAvg[i]) / (graphMax - graphMin);
-		float maxVal = graphHeight * (graphMax - statsMax[i]) / (graphMax - graphMin);
 
-		for (int j = 0; j < bucketPixelSize; j++)
+		// draw axis
+		_display->drawFastVLine(graphX, graphY, graphHeight, ILI9341_WHITE);
+		_display->drawFastHLine(graphX, graphY + graphHeight, graphWidth, ILI9341_WHITE);
+
+		float statsMin[24];
+		float statsAvg[24];
+		float statsMax[24];
+		float bucketCount = 24.0;
+		int bucketPixelSize = graphWidth / bucketCount;
+
+		for (int i = 0; i < bucketCount; i++)
 		{
-			int x = (i * bucketPixelSize) + graphX +1; // +1 to not erase vertical axis
-			_display->drawFastVLine(x + j, graphY + maxVal, minVal - maxVal, 0x1082);
-			_display->drawPixel(x + j, graphY + avgVal, 0x0210);
+			statsMin[i] = (float)random(15, 20);
+			statsAvg[i] = (float)random(22, 25);
+			statsMax[i] = (float)random(25, 30);
+		}
+
+		// render graph
+		for (int i = 0; i < bucketCount; i++)
+		{
+			float minVal = graphHeight * (graphMax - statsMin[i]) / (graphMax - graphMin);
+			float avgVal = graphHeight * (graphMax - statsAvg[i]) / (graphMax - graphMin);
+			float maxVal = graphHeight * (graphMax - statsMax[i]) / (graphMax - graphMin);
+
+			for (int j = 0; j < bucketPixelSize; j++)
+			{
+				int x = (i * bucketPixelSize) + graphX + 1; // +1 to not erase vertical axis
+				_display->drawFastVLine(x + j, graphY + maxVal, minVal - maxVal, 0x1082);
+				_display->drawPixel(x + j, graphY + avgVal, 0x0210);
+			}
 		}
 	}
-
 }

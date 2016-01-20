@@ -13,8 +13,6 @@ public:
 
 private:
 	int _analogPin;
-	//void(*_onMinReached)(float);
-	//void (*_onMaxReached)(float);
 };
 
 #endif

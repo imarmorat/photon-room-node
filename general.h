@@ -7,7 +7,8 @@
 #define TEMPERATURE_MEASURE_ID	0
 #define HUMIDITY_MEASURE_ID	1
 #define PRESSURE_MEASURE_ID	2
-#define MEASURE_COUNT 3
+#define MQ2_MEASURE_ID	3
+#define MEASURE_COUNT 4
 
 enum Action {
 	Action_None = 0,

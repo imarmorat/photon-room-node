@@ -16,6 +16,9 @@ class MeasureMeta
 {
 public:
 	int Id;
+	char * name;
+	String shortName;
+	char * metricName;
 	bool canRaiseAlarm;
 	float latestValue;
 	String format;
@@ -80,7 +83,7 @@ public:
 		
 		timeOfSampling = t;
 
-		Particle.publish(String::format("events.measures.%d.capture", Id), String::format("%f", latestValue));
+		Particle.publish("events.measures.capture", String::format("%f", latestValue));
 	}
 
 private:

@@ -18,6 +18,11 @@ class Component{
 
 		virtual void display();
 
+		virtual void refresh() 
+		{
+			display();
+		};
+
 		virtual Action handleEvent(Action event)
 		{
 			return Action_None;

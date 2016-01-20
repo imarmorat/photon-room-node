@@ -44,7 +44,7 @@ MeasureMeta** measures = (MeasureMeta**)malloc(3 * sizeof(MeasureMeta*));
 QueueList<Action> actionsQueue;
 
 void onTimerElapsed();
-Timer t(5000, onTimerElapsed);
+Timer t(10000, onTimerElapsed);
 
 void onAutoRotateViewTimerElapsed();
 bool isAutoRotateViewOn = false;
@@ -78,9 +78,15 @@ MeasureMeta humidityMeasure = MeasureMeta(2, &humidityDataCollector, "%2.1f");
 PressureDataCollector pressureDataCollector(&bme);
 MeasureMeta pressureMeasure = MeasureMeta(3, &pressureDataCollector, "%4.0f");
 
+AnalogDataCollector mq2DataCollector(A0);
+MeasureMeta mq2Measure = MeasureMeta(4, &mq2DataCollector, "%4.1f");
+
+AllSensorDataComponent summaryView(measures);
 AllSensorDataComponent2 temperatureView(&temperatureMeasure);
 AllSensorDataComponent2 humidityView(&humidityMeasure);
 AllSensorDataComponent2 pressureView(&pressureMeasure);
+AllSensorDataComponent2 mq2View(&mq2Measure);
+
 
 /*
 Few issues worth mentioning:
@@ -89,7 +95,10 @@ Few issues worth mentioning:
 - REMINDER: NO DELAY IN ISR
 */
 
-
+UDP Udp;
+unsigned int localPort = 8888;
+IPAddress zookeeperIP(157, 20, 16, 106);
+unsigned int zookeeperPort = 8089;
 
 void onButton1Pressed()
 {
@@ -110,7 +119,7 @@ void onButton1Pressed()
 	
 	if (actionsQueue.peek() != Event_Button1Pressed)
 		actionsQueue.push(Event_Button1Pressed);
-	
+
 	digitalWrite(D4, LOW);
 
 	interrupts();
@@ -140,6 +149,11 @@ void onMeasureCollectionDone(MeasureMeta * measure)
 {
 	noInterrupts();
 	alarm.CheckForAlerts();
+
+	Udp.beginPacket(zookeeperIP, zookeeperPort);
+	Udp.write(String::format("measures,device=monkey01,sensor=%s value=%f", measure->metricName, measure->latestValue));
+	Udp.endPacket();
+
 	interrupts();
 }
 
@@ -157,55 +171,72 @@ void onAutoRotateViewTimerElapsed()
 		actionsQueue.push(Action_SwitchToNextView);
 }
 
-
-
 /*
 PHOTON SETUP
 */
 void setup()
 {
+	Udp.begin(localPort);
+
 	// todo: need to use a hash table rather than this trick as need to have id such as "TMP"
 	measures[TEMPERATURE_MEASURE_ID] = &temperatureMeasure;
 	measures[HUMIDITY_MEASURE_ID] = &humidityMeasure;
 	measures[PRESSURE_MEASURE_ID] = &pressureMeasure;
+	measures[MQ2_MEASURE_ID] = &mq2Measure;
 
+	temperatureMeasure.name = "Temperature";
+	temperatureMeasure.shortName = "TEMP";
+	temperatureMeasure.metricName = "temperature";
 	temperatureMeasure.progressBarMin = 5;
 	temperatureMeasure.progressBarMax = 35;
 	temperatureMeasure.iconHeight = temperatureIcon_height;
 	temperatureMeasure.iconWidth = temperatureIcon_width;
 	temperatureMeasure.iconData = &temperatureIcon[0];
 
+	humidityMeasure.name = "Humidity";
+	humidityMeasure.shortName = "HUM";
+	humidityMeasure.metricName = "humidity";
 	humidityMeasure.progressBarMin = 0;
 	humidityMeasure.progressBarMax = 100;
 	humidityMeasure.iconHeight = humidityIcon_height;
 	humidityMeasure.iconWidth = humidityIcon_width;
 	humidityMeasure.iconData = &humidityIcon[0];
 
+	pressureMeasure.name = "Pressure";
+	pressureMeasure.shortName = "PRESS";
+	pressureMeasure.metricName = "pressure";
 	pressureMeasure.progressBarMin = 950;
 	pressureMeasure.progressBarMax = 1200;
 	pressureMeasure.iconHeight = pressureIcon_height;
 	pressureMeasure.iconWidth = pressureIcon_width;
 	pressureMeasure.iconData = &pressureIcon[0];
 
-	//measures[3] = &mq2Measure;
+	mq2Measure.name = "MQ-2";
+	mq2Measure.shortName = "CO GAS";
+	mq2Measure.metricName = "MQ-2";
+	mq2Measure.progressBarMin = 0;
+	mq2Measure.progressBarMax = 9999;
+	mq2Measure.iconHeight = pressureIcon_height;
+	mq2Measure.iconWidth = pressureIcon_width;
+	mq2Measure.iconData = &pressureIcon[0];
 
 	//
 	// Displpay init
 	display.begin();
 	display.fillScreen(ILI9341_BLACK);
-	display.setRotation(3);
+	display.setRotation(1);
 
 	//
 	// Views init
 	container.setHeader(&headerComponent);
 	container.setFooter(&footerComponent);
 	container.addView(&splashComponent);
+	container.addView(&summaryView);
 	container.addView(&temperatureView);
 	container.addView(&humidityView);
 	container.addView(&pressureView);
+	container.addView(&mq2View);
 	container.init(&display);
-
-	//delay(5000);
 
 	//
 	// Interruptions setup
@@ -220,7 +251,7 @@ void setup()
 	Particle.publish("events.photon.setup", "done");
 	actionsQueue.push(Action_SwitchToNextView);
 	t.start();
-	autoRotateViewTimer.start(); 
+	//autoRotateViewTimer.start(); 
 	isAutoRotateViewOn = true;
 }
 

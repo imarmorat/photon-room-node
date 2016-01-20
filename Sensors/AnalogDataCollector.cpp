@@ -1,4 +1,5 @@
 #include "AnalogDataCollector.h"
+#include <math.h>
 
 AnalogDataCollector::AnalogDataCollector(int8_t analogPin)
 {
@@ -12,7 +13,17 @@ void AnalogDataCollector::Init()
 
 float AnalogDataCollector::Collect()
 {
-	return digitalRead(_analogPin);
+
+	//
+	// Robtillaart's approach
+	// http://forum.arduino.cc/index.php/topic,55780.0.html
+	float val = analogRead(_analogPin) * 0.0008;
+
+	float rs = 20000.0 * (5.0 - val) / val;
+	float ratio = rs / 10000.0;
+	float ppm = 37143 * pow(ratio, -3.178);
+
+	return ppm;
 }
 
 //

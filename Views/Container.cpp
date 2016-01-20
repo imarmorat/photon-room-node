@@ -75,7 +75,7 @@ Action Container::handleEvent(Action action)
 
 void Container::refresh()
 {
-	_views[currentView]->display();
+	_views[currentView]->refresh();
 }
 
 void Container::switchView()

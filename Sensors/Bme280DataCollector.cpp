@@ -13,10 +13,6 @@ void Bme280DataCollector::Init()
 	if (_isInitialized)
 		return;
 
-	delay(500);
-	Particle.publish("event", "bme init");
-	delay(500);
-
 	bool result = _bme->begin();
 	if (!_bme->begin())
 	{
