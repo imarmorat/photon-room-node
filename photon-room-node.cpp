@@ -29,6 +29,9 @@
 #include "MeasureDefinitions.h"
 #include "queue.h"
 
+#define DEVICE_ID "monkey01"
+#define INFLUXDB_DB	 "measures"
+
 /*
 BME definitions
 */
@@ -163,10 +166,10 @@ void stopAlarm()
 void onMeasureCollectionDone(MeasureMeta * measure)
 {
 	Udp.beginPacket(zookeeperIP, zookeeperPort);
-	Udp.write(String::format("measures,device=monkey01,sensor=%s value=%f", measure->metricName, measure->latestValue));
+	Udp.write(String::format("%s,device=%s,sensor=%s value=%f", INFLUXDB_DB, DEVICE_ID,  measure->metricName, measure->latestValue));
 	Udp.endPacket();
 
-	if (alarm.CheckForAlerts() == MeasureZone_Critical)
+	if (alarm.CheckForAlerts() != MeasureZone_Normal)
 	{
 		actionsQueue.clear();
 		actionsQueue.push(Event_StartAlarmRequested);
@@ -179,6 +182,14 @@ void onCollectionTimerElapsed()
 	actionsQueue.push(Event_MeasureCollectionStarted);
 	dataCollectorManager.Collect(onMeasureCollectionDone);
 	actionsQueue.push(Event_MeasureCollectionCompleted);
+
+	//
+	// stop the alarm if any of the sensors triggered it
+	if (alarm.CheckForAlerts() == MeasureZone_Normal)
+	{
+		actionsQueue.clear();
+		actionsQueue.push(Event_StopAlarmRequested);
+	}
 }
 
 void onOperationalMetricsTimerElapsed()
@@ -188,15 +199,15 @@ void onOperationalMetricsTimerElapsed()
 	float signalInPercent = (signalQuality + 127.0) / (127.0 - 1.0);
 
 	Udp.beginPacket(zookeeperIP, zookeeperPort);
-	Udp.write(String::format("measures,device=monkey01,sensor=wifi-strength value=%f", signalInPercent));
+	Udp.write(String::format("%s,device=%s,sensor=wifi-strength value=%f", INFLUXDB_DB, DEVICE_ID, signalInPercent));
 	Udp.endPacket();
 
 	Udp.beginPacket(zookeeperIP, zookeeperPort);
-	Udp.write(String::format("measures,device=monkey01,sensor=wifi-status value=%d", isReady ? 1 : 0));
+	Udp.write(String::format("%s,device=%s,sensor=wifi-status value=%d", INFLUXDB_DB, DEVICE_ID, isReady ? 1 : 0));
 	Udp.endPacket();
 
 	Udp.beginPacket(zookeeperIP, zookeeperPort);
-	Udp.write(String::format("measures,device=monkey01,sensor=device-freememory value=%d", System.freeMemory()));
+	Udp.write(String::format("%s,device=%s,sensor=device-freememory value=%d", INFLUXDB_DB, DEVICE_ID, System.freeMemory()));
 	Udp.endPacket();
 }
 
