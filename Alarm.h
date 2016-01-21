@@ -6,11 +6,12 @@ class Alarm
 public:
 	Alarm(int buzzerPin, Adafruit_ILI9341 * display);
 	void Init(MeasureMeta** measures);
-	void CheckForAlerts();
+	MeasureZone CheckForAlerts();
 	void TriggerAlarm();
 	void DisableAlarm();
 	void DisplayAlerts();
 	bool IsTriggered();
+	int GetLevelCount(MeasureZone level);
 
 private:
 	int _buzzerPin;

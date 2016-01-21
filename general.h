@@ -15,17 +15,10 @@ enum Action {
 	Action_SwitchToNextView = 1,
 	Action_RefreshView = 3,
 
-	//
-	// User (button) or Software (levels are now within normal range) cancel the alarm
-	Event_StopAlarmRequested = 2,
-
-	//
-	// levels are out of range triggering the alarms
-	Event_AlarmTriggered = 5,
-
-	//
-	// The alarm is now cancelled
-	Event_AlarmStopped = 4,
+	Event_StartAlarmRequested = 31,
+	Event_StopAlarmRequested = 32,
+	Event_AlarmTriggered = 35,
+	Event_AlarmStopped = 34,
 
 	//
 	Event_MeasureCollectionStarted = 10,

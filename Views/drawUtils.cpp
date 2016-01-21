@@ -51,6 +51,11 @@ uint16_t convertRGB888toRGB565(int color, int background)
 	return (((31 * (red + 4)) / 255) << 11) | (((63 * (green + 2)) / 255) << 5) | ((31 * (blue + 4)) / 255);
 }
 
+uint16_t convertRGB888toRGB565(int color)
+{
+	return convertRGB888toRGB565(color, 0);
+}
+
 void drawBitmap(Adafruit_ILI9341* display, int x, int y, int height, int width, const unsigned int * bitmap)
 {
 	for (int i = 0; i < height; i++)

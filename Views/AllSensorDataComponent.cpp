@@ -58,12 +58,12 @@ void AllSensorDataComponent::displayMeasure(Adafruit_ILI9341* display, bool isFi
 	int padding = (height - (textHeight * 2 + iconHeight)) / (nbComponents + 1);
 
 	if (isFirstTime)
-		display->fillRect(x, y, width, height, convertRGB888toRGB565(0x050505, ILI9341_BLACK));
+		display->fillRect(x, y, width, height, convertRGB888toRGB565(0x050505));
 	
 	int yi = y + padding;
 
 	display->setTextSize(2);
-	display->setTextColor(convertRGB888toRGB565(0x353535, ILI9341_BLACK), convertRGB888toRGB565(0x050505, ILI9341_BLACK));
+	display->setTextColor(convertRGB888toRGB565(0x353535), convertRGB888toRGB565(0x050505));
 
 	// short name
 	if (isFirstTime)
@@ -92,10 +92,10 @@ void AllSensorDataComponent::displayMeasure(Adafruit_ILI9341* display, bool isFi
 	
 	if (!isFirstTime)
 		// need to erase previous content as might leave leftovers
-		display->fillRect(x, yi, width, textHeight, convertRGB888toRGB565(0x050505, ILI9341_BLACK));
+		display->fillRect(x, yi, width, textHeight, convertRGB888toRGB565(0x050505));
 	
 	String  value = String::format(measure->format, measure->latestValue);
-	display->setTextColor(ILI9341_GREEN, convertRGB888toRGB565(0x050505, ILI9341_BLACK));
+	display->setTextColor(ILI9341_GREEN, convertRGB888toRGB565(0x050505));
 	display->setCursor(x + width / 2 - value.length()*charWidth/2, yi);
 	display->println(value);
 }

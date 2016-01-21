@@ -12,7 +12,7 @@
 #include "Views\icons\pressure-icon-64.h"
 #include "Views\icons\pressure32.h"
 //#include "Views\icons\mq2-64.h"
-//#include "Views\icons\mq2-32.h"
+#include "Views\icons\mq2-32.h"
 
 #include "Sensors\Bme280DataCollector.h"
 #include "Sensors\AnalogDataCollector.h"
@@ -91,7 +91,14 @@ PressureDataCollector pressureDataCollector(&bme);
 MeasureMeta pressureMeasure = MeasureMeta(3, &pressureDataCollector, "%4.0f");
 
 AnalogDataCollector mq2DataCollector(A0);
-MeasureMeta mq2Measure = MeasureMeta(4, &mq2DataCollector, "%4.1f");
+BoundariesMeasureCheck mq2WarningBoundaries = BoundariesMeasureCheck(100.0, 300.0);
+BoundariesMeasureCheck mq2CriticalBoundaries = BoundariesMeasureCheck(300.0, 999999.0);
+MeasureMeta mq2Measure = MeasureMeta(
+	4, 
+	&mq2WarningBoundaries,
+	&mq2CriticalBoundaries,
+	&mq2DataCollector, 
+	"%4.1f");
 
 AllSensorDataComponent summaryView(measures);
 AllSensorDataComponent2 temperatureView(&temperatureMeasure);
@@ -114,8 +121,6 @@ unsigned int zookeeperPort = 8089;
 
 void onButton1Pressed()
 {
-	noInterrupts();
-
 	digitalWrite(D4, HIGH);
 	//if (isAutoRotateViewOn)
 	//{
@@ -133,40 +138,39 @@ void onButton1Pressed()
 		actionsQueue.push(Event_Button1Pressed);
 
 	digitalWrite(D4, LOW);
-
-	interrupts();
 }
 
 void onButton2Pressed()
 {
-	noInterrupts();
-
 	digitalWrite(D4, HIGH);
 	if (actionsQueue.peek() != Event_Button2Pressed)
 		actionsQueue.push(Event_Button2Pressed);
 	digitalWrite(D4, LOW);
+}
 
-	interrupts();
+void startAlarm()
+{
+	alarm.TriggerAlarm();
+	actionsQueue.push(Event_AlarmTriggered);
 }
 
 void stopAlarm()
 {
-	noInterrupts();
 	alarm.DisableAlarm();
-	interrupts();
 	actionsQueue.push(Event_AlarmStopped);
 }
 
 void onMeasureCollectionDone(MeasureMeta * measure)
 {
-	noInterrupts();
-	alarm.CheckForAlerts();
-
 	Udp.beginPacket(zookeeperIP, zookeeperPort);
 	Udp.write(String::format("measures,device=monkey01,sensor=%s value=%f", measure->metricName, measure->latestValue));
 	Udp.endPacket();
 
-	interrupts();
+	if (alarm.CheckForAlerts() == MeasureZone_Critical)
+	{
+		actionsQueue.clear();
+		actionsQueue.push(Event_StartAlarmRequested);
+	}
 }
 
 void onCollectionTimerElapsed()
@@ -245,7 +249,7 @@ void setup()
 	mq2Measure.progressBarMin = 0;
 	mq2Measure.progressBarMax = 9999;
 	mq2Measure.iconData64 = &pressureIcon64[0];
-	mq2Measure.iconData32 = &pressure32[0];
+	mq2Measure.iconData32 = &mq232[0];
 
 	//
 	// Displpay init
@@ -297,12 +301,15 @@ void loop()
 	switch (actionToDo)
 	{
 		case Action_None: break;
-		case Event_StopAlarmRequested:
-			stopAlarm(); 
-			break;
+		case Event_StartAlarmRequested: startAlarm(); break;
+		case Event_StopAlarmRequested: stopAlarm(); break;
 		default: 
-			// anything that is not handled by the loop code is propagated to the container
-			actionToDo = container.handleEvent(actionToDo);
+			if (actionToDo == Event_Button1Pressed && alarm.IsTriggered())
+				stopAlarm();
+			else			
+				// anything that is not handled by the loop code is propagated to the container
+				if (!alarm.IsTriggered())
+					actionToDo = container.handleEvent(actionToDo);
 			break;
 	}
 }

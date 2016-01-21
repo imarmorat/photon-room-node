@@ -67,6 +67,8 @@ public:
 	// get an item from the queue.
 	T peek() const;
 
+	void clear();
+
 	// check if the queue is empty.
 	bool isEmpty() const;
 
@@ -165,6 +167,12 @@ T QueueList<T>::pop() {
 
 	// return the item.
 	return item;
+}
+
+// clear the queue
+template<typename T> void QueueList<T>::clear()
+{
+	while (!isEmpty()) pop();
 }
 
 // get an item from the queue.

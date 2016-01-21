@@ -2,6 +2,7 @@
 #include "general.h"
 #include "DataCollection.h"
 #include "Alarm.h"
+#include "Views\drawUtils.h"
 
 //#define nbMeasures sizeof(_measures)/sizeof(MeasureMeta*)
 
@@ -18,23 +19,29 @@ void Alarm::Init(MeasureMeta ** measures)
 	digitalWrite(_buzzerPin, LOW);
 }
 
-void Alarm::CheckForAlerts()
+// returns the highest level of error
+MeasureZone Alarm::CheckForAlerts()
 {
-	int nbCriticals = 0, nbWarnings = 0, nbNormals = 0;
+	int nbCriticals = GetLevelCount(MeasureZone_Critical);
+	int nbWarnings = GetLevelCount(MeasureZone_Warning);
+
+	if (nbCriticals > 0)
+		return MeasureZone_Critical;
+
+	if (nbWarnings > 0)
+		return MeasureZone_Warning;
+
+	return MeasureZone_Normal;
+}
+
+int Alarm::GetLevelCount(MeasureZone level)
+{
+	int count = 0;
 	for (int i = 0; i < MEASURE_COUNT; i++)
-	{
-		switch (_measures[i]->latestLevel)
-		{
-			case MeasureZone_Critical: nbCriticals++; break;
-			case MeasureZone_Warning: nbWarnings++; break;
-			case MeasureZone_Normal: nbNormals++; break;
-		}
-	}
-	
-	if (nbCriticals > 0 || nbWarnings > 0)
-		TriggerAlarm();
-	else
-		DisableAlarm();
+		if (_measures[i]->latestLevel == level) 
+			count++;
+
+	return count;
 }
 
 void Alarm::TriggerAlarm()
@@ -72,11 +79,73 @@ bool Alarm::IsTriggered()
 
 void Alarm::DisplayAlerts()
 {
-	// show a summary of the alerts
-	_display->clearDisplay();
-	_display->setCursor(0, 0);
-	_display->setTextSize(3);
-	_display->println("ALERT!!");
+	int nbCritical = GetLevelCount(MeasureZone_Critical);
+	int nbWarning = GetLevelCount(MeasureZone_Warning);
+
+	//
+	// big text alert
+	int messageBoxHeight = 240 / 2;
+	uint16_t mainBgColor = nbCritical != 0 ? ILI9341_RED : convertRGB888toRGB565(0xFFA500);
+	_display->fillRect(0, 0, 320, messageBoxHeight, mainBgColor);
+	int textSize = 4; int textHeight = 28;
+	String message = nbCritical > 0 ? "CRITICAL" : "WARNING";
+	int textX = 320 - (message.length() * (textSize * 5)) / 2; // 320 - (ALERT!!.length * charWidth)
+	int textY = messageBoxHeight - textHeight / 2;
+
+	_display->setCursor(textX, textY); 
+	_display->setTextSize(textSize);
+	_display->setTextColor(ILI9341_WHITE, mainBgColor);
+	_display->println(message);
+
+	//
+	// Display measure info for those who have warnings or error
+	_display->fillRect(0, messageBoxHeight + 1, 320, 240 - messageBoxHeight, convertRGB888toRGB565(0x353535, mainBgColor));
+	int measureContainerX = 20;
+	int measureCoutainerY = 240 / 2;
+	int measureCoutainerWidth = 320 - measureContainerX;
+	int measureCoutainerHeight = 240 - measureCoutainerY;
+
+	int measureBoxMargin = 5;
+	int measureBoxPadding = 2;
+	int measureBoxWidth = measureCoutainerWidth / (nbCritical + nbWarning);
+	int measureBoxHeight = measureCoutainerHeight - measureBoxMargin*2; // 5px padding
+	int headerTextSize = 2;
+	int charWidth = 5;
+	int iconSize = 32;
+	int latestValueTextSize = 2;
+	int verticalSpacing = (measureBoxHeight - (headerTextSize * 7 + iconSize + latestValueTextSize * 7)) / (3 + 1); // 3 layout item => 4 spaces
+
+	int xi = measureContainerX + measureBoxMargin;
+	int yi = measureCoutainerY + measureBoxMargin + verticalSpacing;
+	for (int i = 0; i < MEASURE_COUNT; i++)
+	{
+		if (_measures[i]->latestLevel == MeasureZone_Normal)
+			continue;
+
+		int yj = yi;
+		uint16_t boxBgColor = _measures[i]->latestLevel == MeasureZone_Critical ? ILI9341_RED : convertRGB888toRGB565(0xFFA500);
+		_display->fillRect(xi, yi, measureBoxWidth, measureBoxHeight, boxBgColor);
+
+		// header
+		_display->setTextColor(ILI9341_WHITE, boxBgColor);
+		_display->setCursor(xi + measureBoxWidth / 2 - _measures[i]->shortName.length() * charWidth * headerTextSize / 2, yj);
+		_display->println(_measures[i]->shortName);
+
+		//
+		// icon
+		yj += verticalSpacing;
+		drawBitmap(_display, xi + measureBoxWidth / 2 - iconSize / 2, yj, iconSize, iconSize, _measures[i]->iconData32);
+
+		//
+		// latest value
+		yj += verticalSpacing;
+		String  value = String::format(_measures[i]->format, _measures[i]->latestValue);
+		_display->setTextColor(ILI9341_WHITE, convertRGB888toRGB565(0x050505));
+		_display->setCursor(xi + measureBoxWidth / 2 - value.length() * charWidth * latestValueTextSize / 2, yj);
+		_display->println(value);
+
+		xi += measureBoxMargin + measureBoxWidth;
+	}
 
 	// todo: display useful information
 }
