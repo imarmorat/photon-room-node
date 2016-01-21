@@ -22,7 +22,8 @@ public:
 	bool canRaiseAlarm;
 	float latestValue;
 	String format;
-	int iconHeight; int iconWidth; const unsigned int * iconData;
+	const unsigned int * iconData64;
+	const unsigned int * iconData32;
 
 	//
 	// some stats

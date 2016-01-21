@@ -6,8 +6,13 @@
 #include "Adafruit_BME280\Adafruit_Sensor.h"
 
 #include "Views\icons\humidity-icon-64.h"
+#include "Views\icons\humidity32.h"
 #include "Views\icons\temperature-icon-64.h"
+#include "Views\icons\temperature32.h"
 #include "Views\icons\pressure-icon-64.h"
+#include "Views\icons\pressure32.h"
+//#include "Views\icons\mq2-64.h"
+//#include "Views\icons\mq2-32.h"
 
 #include "Sensors\Bme280DataCollector.h"
 #include "Sensors\AnalogDataCollector.h"
@@ -43,8 +48,15 @@ Alarm alarm(D4, &display);
 MeasureMeta** measures = (MeasureMeta**)malloc(3 * sizeof(MeasureMeta*));
 QueueList<Action> actionsQueue;
 
-void onTimerElapsed();
-Timer t(10000, onTimerElapsed);
+
+/*
+Timers
+*/
+void onCollectionTimerElapsed();
+Timer collectionTimer(10000, onCollectionTimerElapsed);
+
+void onOperationalMetricsTimerElapsed();
+Timer operationalMetricsCollectionTimer(30000, onOperationalMetricsTimerElapsed);
 
 void onAutoRotateViewTimerElapsed();
 bool isAutoRotateViewOn = false;
@@ -157,12 +169,31 @@ void onMeasureCollectionDone(MeasureMeta * measure)
 	interrupts();
 }
 
-void onTimerElapsed()
+void onCollectionTimerElapsed()
 {
 	// collect
 	actionsQueue.push(Event_MeasureCollectionStarted);
 	dataCollectorManager.Collect(onMeasureCollectionDone);
 	actionsQueue.push(Event_MeasureCollectionCompleted);
+}
+
+void onOperationalMetricsTimerElapsed()
+{
+	bool isReady = WiFi.ready();
+	int signalQuality = WiFi.RSSI(); // returns a value between -127 and -1
+	float signalInPercent = (signalQuality + 127.0) / (127.0 - 1.0);
+
+	Udp.beginPacket(zookeeperIP, zookeeperPort);
+	Udp.write(String::format("measures,device=monkey01,sensor=wifi-strength value=%f", signalInPercent));
+	Udp.endPacket();
+
+	Udp.beginPacket(zookeeperIP, zookeeperPort);
+	Udp.write(String::format("measures,device=monkey01,sensor=wifi-status value=%d", isReady ? 1 : 0));
+	Udp.endPacket();
+
+	Udp.beginPacket(zookeeperIP, zookeeperPort);
+	Udp.write(String::format("measures,device=monkey01,sensor=device-freememory value=%d", System.freeMemory()));
+	Udp.endPacket();
 }
 
 void onAutoRotateViewTimerElapsed()
@@ -189,36 +220,32 @@ void setup()
 	temperatureMeasure.metricName = "temperature";
 	temperatureMeasure.progressBarMin = 5;
 	temperatureMeasure.progressBarMax = 35;
-	temperatureMeasure.iconHeight = temperatureIcon_height;
-	temperatureMeasure.iconWidth = temperatureIcon_width;
-	temperatureMeasure.iconData = &temperatureIcon[0];
+	temperatureMeasure.iconData64 = &temperatureIcon64[0];
+	temperatureMeasure.iconData32 = &temperature32[0];
 
 	humidityMeasure.name = "Humidity";
 	humidityMeasure.shortName = "HUM";
 	humidityMeasure.metricName = "humidity";
 	humidityMeasure.progressBarMin = 0;
 	humidityMeasure.progressBarMax = 100;
-	humidityMeasure.iconHeight = humidityIcon_height;
-	humidityMeasure.iconWidth = humidityIcon_width;
-	humidityMeasure.iconData = &humidityIcon[0];
+	humidityMeasure.iconData64 = &humidityIcon64[0];
+	humidityMeasure.iconData32 = &humidity32[0];
 
 	pressureMeasure.name = "Pressure";
 	pressureMeasure.shortName = "PRESS";
 	pressureMeasure.metricName = "pressure";
 	pressureMeasure.progressBarMin = 950;
 	pressureMeasure.progressBarMax = 1200;
-	pressureMeasure.iconHeight = pressureIcon_height;
-	pressureMeasure.iconWidth = pressureIcon_width;
-	pressureMeasure.iconData = &pressureIcon[0];
+	pressureMeasure.iconData64 = &pressureIcon64[0];
+	pressureMeasure.iconData32 = &pressure32[0];
 
 	mq2Measure.name = "MQ-2";
 	mq2Measure.shortName = "CO GAS";
 	mq2Measure.metricName = "MQ-2";
 	mq2Measure.progressBarMin = 0;
 	mq2Measure.progressBarMax = 9999;
-	mq2Measure.iconHeight = pressureIcon_height;
-	mq2Measure.iconWidth = pressureIcon_width;
-	mq2Measure.iconData = &pressureIcon[0];
+	mq2Measure.iconData64 = &pressureIcon64[0];
+	mq2Measure.iconData32 = &pressure32[0];
 
 	//
 	// Displpay init
@@ -250,7 +277,8 @@ void setup()
 	dataCollectorManager.Init(measures);
 	Particle.publish("events.photon.setup", "done");
 	actionsQueue.push(Action_SwitchToNextView);
-	t.start();
+	collectionTimer.start();
+	operationalMetricsCollectionTimer.start();
 	//autoRotateViewTimer.start(); 
 	isAutoRotateViewOn = true;
 }

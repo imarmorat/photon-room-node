@@ -77,13 +77,13 @@ void AllSensorDataComponent::displayMeasure(Adafruit_ILI9341* display, bool isFi
 
 	if (isFirstTime)
 	{
-		if (measure->iconData != NULL)
+		if (measure->iconData32 != NULL)
 		{
-			drawBitmap(display, x + width / 2 - iconHeight / 2, yi, iconHeight, iconHeight, measure->iconData);
+			drawBitmap(display, x + width / 2 - iconHeight / 2, yi, iconHeight, iconHeight, measure->iconData32);
 		}
 		else
 		{
-			display->fillRect(x + width / 2 - iconHeight / 2, yi, iconHeight, iconHeight, ILI9341_GREEN);
+			display->fillRect(x + width / 2 - iconHeight / 2, yi, iconHeight, iconHeight, ILI9341_BLACK);
 		}
 	}
 

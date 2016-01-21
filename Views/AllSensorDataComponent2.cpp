@@ -64,7 +64,7 @@ void AllSensorDataComponent2::refresh()
 	_display->println(String::format(_measure->format, _measure->dayMin));
 	drawBitmap(_display, 180, 110, arrowdownIcon_height, arrowdownIcon_width, &arrowdownIcon[0]);
 
-	drawBitmap(_display, xc - _measure->iconHeight / 2, yc - _measure->iconWidth / 2, _measure->iconHeight, _measure->iconWidth, &_measure->iconData[0]);
+	drawBitmap(_display, xc - 64 / 2, yc - 64 / 2, 64, 64, &_measure->iconData64[0]);
 	
 
 	//
