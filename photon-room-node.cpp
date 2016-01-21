@@ -79,7 +79,7 @@ Measures declarations
 */
 TemperatureDataCollector tempDataCollector(&bme);
 BoundariesMeasureCheck temperatureWarningBoundaries = BoundariesMeasureCheck(10.0, 29.0);
-BoundariesMeasureCheck temperatureCriticalBoundaries = BoundariesMeasureCheck(0.0, 40.0);
+BoundariesMeasureCheck temperatureCriticalBoundaries = BoundariesMeasureCheck(30.0, 999.0);
 MeasureMeta temperatureMeasure = MeasureMeta(
 	1,
 	&temperatureWarningBoundaries, // warning
