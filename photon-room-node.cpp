@@ -211,8 +211,9 @@ void onOperationalMetricsTimerElapsed()
 	Udp.write(String::format("%s,device=%s,sensor=device-freememory value=%d", INFLUXDB_DB, DEVICE_ID, System.freeMemory()));
 	Udp.endPacket();
 
+	int alarmLevel = alarm.CheckForAlerts();
 	Udp.beginPacket(zookeeperIP, zookeeperPort);
-	Udp.write(String::format("%s,device=%s,sensor=alarm-status value=%d", INFLUXDB_DB, DEVICE_ID, alarm.IsTriggered() ? 1 : 0));
+	Udp.write(String::format("%s,device=%s,sensor=alarm-status value=%d", INFLUXDB_DB, DEVICE_ID, alarmLevel == MeasureZone_Critical ? 2 : (alarmLevel == MeasureZone_Warning ? 1 : 0 )));
 	Udp.endPacket();
 }
 
