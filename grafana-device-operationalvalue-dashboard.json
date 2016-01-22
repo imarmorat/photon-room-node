@@ -77,7 +77,7 @@
                 }
               ],
               "measurement": "measures",
-              "query": "SELECT mean(\"value\") FROM \"measures\" WHERE \"device\" = 'monkey01' AND \"sensor\" = 'wifi-strength' AND $timeFilter GROUP BY time($interval) fill(null)",
+              "query": "SELECT mean(\"value\") FROM \"measures\" WHERE \"device\" =~ /$deviceId$/ AND \"sensor\" = 'wifi-strength' AND $timeFilter GROUP BY time($interval) fill(null)",
               "refId": "B",
               "resultFormat": "time_series",
               "select": [
@@ -97,8 +97,8 @@
               "tags": [
                 {
                   "key": "device",
-                  "operator": "=",
-                  "value": "monkey01"
+                  "operator": "=~",
+                  "value": "/$deviceId$/"
                 },
                 {
                   "condition": "AND",
@@ -123,7 +123,14 @@
           "y_formats": [
             "percentunit",
             "short"
-          ]
+          ],
+          "scopedVars": {
+            "deviceId": {
+              "text": "monkey01",
+              "value": "monkey01",
+              "selected": true
+            }
+          }
         },
         {
           "aliasColors": {},
@@ -185,7 +192,7 @@
                 }
               ],
               "measurement": "measures",
-              "query": "SELECT mean(\"value\") FROM \"measures\" WHERE \"device\" = 'monkey01' AND \"sensor\" = 'wifi-status' AND $timeFilter GROUP BY time($interval) fill(null)",
+              "query": "SELECT mean(\"value\") FROM \"measures\" WHERE \"device\" =~ /$deviceId$/ AND \"sensor\" = 'wifi-status' AND $timeFilter GROUP BY time($interval) fill(null)",
               "refId": "A",
               "resultFormat": "time_series",
               "select": [
@@ -205,8 +212,8 @@
               "tags": [
                 {
                   "key": "device",
-                  "operator": "=",
-                  "value": "monkey01"
+                  "operator": "=~",
+                  "value": "/$deviceId$/"
                 },
                 {
                   "condition": "AND",
@@ -231,7 +238,14 @@
           "y_formats": [
             "short",
             "short"
-          ]
+          ],
+          "scopedVars": {
+            "deviceId": {
+              "text": "monkey01",
+              "value": "monkey01",
+              "selected": true
+            }
+          }
         },
         {
           "aliasColors": {},
@@ -298,7 +312,7 @@
                 }
               ],
               "measurement": "measures",
-              "query": "SELECT mean(\"value\") FROM \"measures\" WHERE \"device\" = 'monkey01' AND \"sensor\" = 'device-freememory' AND $timeFilter GROUP BY time($interval) fill(null)",
+              "query": "SELECT mean(\"value\") FROM \"measures\" WHERE \"device\" =~ /$deviceId$/ AND \"sensor\" = 'device-freememory' AND $timeFilter GROUP BY time($interval) fill(null)",
               "refId": "A",
               "resultFormat": "time_series",
               "select": [
@@ -318,8 +332,8 @@
               "tags": [
                 {
                   "key": "device",
-                  "operator": "=",
-                  "value": "monkey01"
+                  "operator": "=~",
+                  "value": "/$deviceId$/"
                 },
                 {
                   "condition": "AND",
@@ -344,11 +358,26 @@
           "y_formats": [
             "bytes",
             "short"
-          ]
+          ],
+          "scopedVars": {
+            "deviceId": {
+              "text": "monkey01",
+              "value": "monkey01",
+              "selected": true
+            }
+          }
         }
       ],
+      "repeat": "deviceId",
       "showTitle": true,
-      "title": "MONKEY-01"
+      "title": "$deviceId",
+      "scopedVars": {
+        "deviceId": {
+          "text": "monkey01",
+          "value": "monkey01",
+          "selected": true
+        }
+      }
     }
   ],
   "time": {
@@ -382,13 +411,37 @@
     ]
   },
   "templating": {
-    "list": []
+    "list": [
+      {
+        "allFormat": "glob",
+        "current": {
+          "text": "monkey01",
+          "value": "monkey01"
+        },
+        "datasource": null,
+        "includeAll": false,
+        "multi": true,
+        "multiFormat": "glob",
+        "name": "deviceId",
+        "options": [
+          {
+            "text": "monkey01",
+            "value": "monkey01",
+            "selected": true
+          }
+        ],
+        "query": "show tag values from measures with key = \"device\"",
+        "refresh": true,
+        "regex": "",
+        "type": "query"
+      }
+    ]
   },
   "annotations": {
     "list": []
   },
   "refresh": false,
   "schemaVersion": 8,
-  "version": 3,
+  "version": 5,
   "links": []
 }

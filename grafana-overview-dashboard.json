@@ -49,46 +49,31 @@
             {
               "alias": "Status",
               "dsType": "influxdb",
-              "groupBy": [
-                {
-                  "params": [
-                    "1s"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
+              "groupBy": [],
               "measurement": "measures",
-              "query": "SELECT last(\"value\") FROM \"measures\" WHERE \"device\" = 'monkey01' AND \"sensor\" = 'alarm-status'",
-              "rawQuery": true,
+              "query": "SELECT last(\"value\") FROM \"measures\" WHERE \"device\" =~ /$deviceId$/ AND \"sensor\" = 'alarm-status' AND $timeFilter",
+              "rawQuery": false,
               "refId": "A",
               "resultFormat": "time_series",
               "select": [
                 [
                   {
+                    "type": "field",
                     "params": [
                       "value"
-                    ],
-                    "type": "field"
+                    ]
                   },
                   {
-                    "params": [
-                      "3"
-                    ],
-                    "type": "top"
+                    "type": "last",
+                    "params": []
                   }
                 ]
               ],
               "tags": [
                 {
                   "key": "device",
-                  "operator": "=",
-                  "value": "monkey01"
+                  "operator": "=~",
+                  "value": "/$deviceId$/"
                 },
                 {
                   "condition": "AND",
@@ -121,7 +106,14 @@
               "value": "2"
             }
           ],
-          "valueName": "avg"
+          "valueName": "avg",
+          "scopedVars": {
+            "deviceId": {
+              "text": "monkey01",
+              "value": "monkey01",
+              "selected": true
+            }
+          }
         },
         {
           "cacheTimeout": null,
@@ -159,23 +151,10 @@
           "targets": [
             {
               "dsType": "influxdb",
-              "groupBy": [
-                {
-                  "params": [
-                    "10s"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "none"
-                  ],
-                  "type": "fill"
-                }
-              ],
+              "groupBy": [],
               "measurement": "measures",
-              "query": "SELECT last(\"value\") FROM \"measures\" WHERE \"sensor\" = 'temperature' AND \"device\" = 'monkey01'",
-              "rawQuery": true,
+              "query": "SELECT \"value\" FROM \"measures\" WHERE \"sensor\" = 'temperature' AND \"device\" =~ /$deviceId$/ AND $timeFilter",
+              "rawQuery": false,
               "refId": "A",
               "resultFormat": "time_series",
               "select": [
@@ -185,10 +164,6 @@
                       "value"
                     ],
                     "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "last"
                   }
                 ]
               ],
@@ -201,8 +176,8 @@
                 {
                   "condition": "AND",
                   "key": "device",
-                  "operator": "=",
-                  "value": "monkey01"
+                  "operator": "=~",
+                  "value": "/$deviceId$/"
                 }
               ]
             }
@@ -221,7 +196,14 @@
               "value": "null"
             }
           ],
-          "valueName": "avg"
+          "valueName": "avg",
+          "scopedVars": {
+            "deviceId": {
+              "text": "monkey01",
+              "value": "monkey01",
+              "selected": true
+            }
+          }
         },
         {
           "cacheTimeout": null,
@@ -259,36 +241,23 @@
           "targets": [
             {
               "dsType": "influxdb",
-              "groupBy": [
-                {
-                  "params": [
-                    "$interval"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
+              "groupBy": [],
               "measurement": "measures",
-              "query": "SELECT last(\"value\") FROM \"measures\" WHERE \"sensor\" = 'pressure'",
-              "rawQuery": true,
+              "query": "SELECT last(\"value\") FROM \"measures\" WHERE \"sensor\" = 'pressure' AND \"device\" =~ /$deviceId$/ AND $timeFilter",
+              "rawQuery": false,
               "refId": "A",
               "resultFormat": "time_series",
               "select": [
                 [
                   {
+                    "type": "field",
                     "params": [
                       "value"
-                    ],
-                    "type": "field"
+                    ]
                   },
                   {
-                    "params": [],
-                    "type": "last"
+                    "type": "last",
+                    "params": []
                   }
                 ]
               ],
@@ -297,6 +266,12 @@
                   "key": "sensor",
                   "operator": "=",
                   "value": "pressure"
+                },
+                {
+                  "condition": "AND",
+                  "key": "device",
+                  "operator": "=~",
+                  "value": "/$deviceId$/"
                 }
               ]
             }
@@ -315,7 +290,14 @@
               "value": "null"
             }
           ],
-          "valueName": "avg"
+          "valueName": "avg",
+          "scopedVars": {
+            "deviceId": {
+              "text": "monkey01",
+              "value": "monkey01",
+              "selected": true
+            }
+          }
         },
         {
           "cacheTimeout": null,
@@ -353,23 +335,10 @@
           "targets": [
             {
               "dsType": "influxdb",
-              "groupBy": [
-                {
-                  "params": [
-                    "$interval"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
+              "groupBy": [],
               "measurement": "measures",
-              "query": "SELECT last(\"value\") FROM \"measures\" WHERE \"sensor\" = 'humidity' AND \"device\" = 'monkey01'",
-              "rawQuery": true,
+              "query": "SELECT \"value\" FROM \"measures\" WHERE \"sensor\" = 'humidity' AND \"device\" =~ /$deviceId$/ AND $timeFilter",
+              "rawQuery": false,
               "refId": "A",
               "resultFormat": "time_series",
               "select": [
@@ -379,10 +348,6 @@
                       "value"
                     ],
                     "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "last"
                   }
                 ]
               ],
@@ -395,8 +360,8 @@
                 {
                   "condition": "AND",
                   "key": "device",
-                  "operator": "=",
-                  "value": "monkey01"
+                  "operator": "=~",
+                  "value": "/$deviceId$/"
                 }
               ]
             }
@@ -414,7 +379,14 @@
               "value": "null"
             }
           ],
-          "valueName": "avg"
+          "valueName": "avg",
+          "scopedVars": {
+            "deviceId": {
+              "text": "monkey01",
+              "value": "monkey01",
+              "selected": true
+            }
+          }
         },
         {
           "cacheTimeout": null,
@@ -452,23 +424,10 @@
           "targets": [
             {
               "dsType": "influxdb",
-              "groupBy": [
-                {
-                  "params": [
-                    "$interval"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
+              "groupBy": [],
               "measurement": "measures",
-              "query": "SELECT last(\"value\") FROM \"measures\" WHERE \"sensor\" = 'MQ-2'",
-              "rawQuery": true,
+              "query": "SELECT \"value\" FROM \"measures\" WHERE \"sensor\" = 'MQ-2' AND \"device\" =~ /$deviceId$/ AND $timeFilter",
+              "rawQuery": false,
               "refId": "A",
               "resultFormat": "time_series",
               "select": [
@@ -478,10 +437,6 @@
                       "value"
                     ],
                     "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "last"
                   }
                 ]
               ],
@@ -490,6 +445,12 @@
                   "key": "sensor",
                   "operator": "=",
                   "value": "MQ-2"
+                },
+                {
+                  "condition": "AND",
+                  "key": "device",
+                  "operator": "=~",
+                  "value": "/$deviceId$/"
                 }
               ]
             }
@@ -508,11 +469,26 @@
               "value": "null"
             }
           ],
-          "valueName": "avg"
+          "valueName": "avg",
+          "scopedVars": {
+            "deviceId": {
+              "text": "monkey01",
+              "value": "monkey01",
+              "selected": true
+            }
+          }
         }
       ],
       "showTitle": true,
-      "title": "MONKEY 01"
+      "title": "$deviceId",
+      "repeat": "deviceId",
+      "scopedVars": {
+        "deviceId": {
+          "text": "monkey01",
+          "value": "monkey01",
+          "selected": true
+        }
+      }
     }
   ],
   "time": {
@@ -546,13 +522,36 @@
     ]
   },
   "templating": {
-    "list": []
+    "list": [
+      {
+        "type": "query",
+        "datasource": null,
+        "refresh": true,
+        "name": "deviceId",
+        "options": [
+          {
+            "text": "monkey01",
+            "value": "monkey01",
+            "selected": true
+          }
+        ],
+        "includeAll": false,
+        "allFormat": "glob",
+        "multi": true,
+        "multiFormat": "glob",
+        "query": "show tag values from measures with key = \"device\"",
+        "current": {
+          "text": "monkey01",
+          "value": "monkey01"
+        }
+      }
+    ]
   },
   "annotations": {
     "list": []
   },
   "refresh": "10s",
   "schemaVersion": 8,
-  "version": 4,
+  "version": 7,
   "links": []
 }
