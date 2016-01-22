@@ -29,8 +29,8 @@
 #include "Alarm.h"
 #include "MeasureDefinitions.h"
 #include "queue.h"
+#include "DataPublisher.h"
 
-#define DEVICE_ID "monkey01"
 #define INFLUXDB_DB	 "measures"
 
 /*
@@ -50,7 +50,6 @@ Adafruit_BME280 bme;
 DataCollectorManager dataCollectorManager(D7);
 MeasureMeta** measures = (MeasureMeta**)malloc(3 * sizeof(MeasureMeta*));
 QueueList<Action> actionsQueue;
-
 
 /*
 Timers
@@ -117,11 +116,9 @@ Few issues worth mentioning:
 - pass global objects using obj address, not full object as doing a shadow copy and this mess up object local values
 - REMINDER: NO DELAY IN ISR
 */
-
-UDP Udp;
-unsigned int localPort = 8888;
 IPAddress zookeeperIP(157, 20, 16, 106);
-unsigned int zookeeperPort = 8089;
+UDP udpClient;
+InfluxDBDataPublisher dataPublisher(zookeeperIP, &udpClient, 8089,  "measures");
 
 void onButton1Pressed()
 {
@@ -166,9 +163,7 @@ void stopAlarm()
 
 void onMeasureCollectionDone(MeasureMeta * measure)
 {
-	Udp.beginPacket(zookeeperIP, zookeeperPort);
-	Udp.write(String::format("%s,device=%s,sensor=%s value=%f", INFLUXDB_DB, DEVICE_ID,  measure->metricName, measure->latestValue));
-	Udp.endPacket();
+	dataPublisher.publish(measure->metricName, measure->latestValue);
 
 	if (alarm.CheckForAlerts() != MeasureZone_Normal && !alarm.IsTriggered())
 	{
@@ -199,22 +194,12 @@ void onOperationalMetricsTimerElapsed()
 	int signalQuality = WiFi.RSSI(); // returns a value between -127 and -1
 	float signalInPercent = (signalQuality + 127.0) / (127.0 - 1.0);
 
-	Udp.beginPacket(zookeeperIP, zookeeperPort);
-	Udp.write(String::format("%s,device=%s,sensor=wifi-strength value=%f", INFLUXDB_DB, DEVICE_ID, signalInPercent));
-	Udp.endPacket();
-
-	Udp.beginPacket(zookeeperIP, zookeeperPort);
-	Udp.write(String::format("%s,device=%s,sensor=wifi-status value=%d", INFLUXDB_DB, DEVICE_ID, isReady ? 1 : 0));
-	Udp.endPacket();
-
-	Udp.beginPacket(zookeeperIP, zookeeperPort);
-	Udp.write(String::format("%s,device=%s,sensor=device-freememory value=%d", INFLUXDB_DB, DEVICE_ID, System.freeMemory()));
-	Udp.endPacket();
-
+	dataPublisher.publish("wifi-strength", signalInPercent);
+	dataPublisher.publish("wifi-status", isReady ? 1 : 0);
+	dataPublisher.publish("device-freememory", System.freeMemory());
+	
 	int alarmLevel = alarm.CheckForAlerts();
-	Udp.beginPacket(zookeeperIP, zookeeperPort);
-	Udp.write(String::format("%s,device=%s,sensor=alarm-status value=%d", INFLUXDB_DB, DEVICE_ID, alarmLevel == MeasureZone_Critical ? 2 : (alarmLevel == MeasureZone_Warning ? 1 : 0 )));
-	Udp.endPacket();
+	dataPublisher.publish("alarm-status", alarmLevel == MeasureZone_Critical ? 2 : (alarmLevel == MeasureZone_Warning ? 1 : 0 ));
 }
 
 void onAutoRotateViewTimerElapsed()
@@ -228,8 +213,6 @@ PHOTON SETUP
 */
 void setup()
 {
-	Udp.begin(localPort);
-
 	// todo: need to use a hash table rather than this trick as need to have id such as "TMP"
 	measures[TEMPERATURE_MEASURE_ID] = &temperatureMeasure;
 	measures[HUMIDITY_MEASURE_ID] = &humidityMeasure;
@@ -267,6 +250,8 @@ void setup()
 	mq2Measure.progressBarMax = 9999;
 	mq2Measure.iconData64 = &pressureIcon64[0];
 	mq2Measure.iconData32 = &mq232[0];
+
+	dataPublisher.init();
 
 	//
 	// Displpay init
