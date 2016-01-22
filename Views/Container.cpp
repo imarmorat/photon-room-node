@@ -98,5 +98,7 @@ void Container::displayPopup(Component * component)
 void Container::hidePopup()
 {
 	_currentView = _views[currentViewIdx];
+	_footer->display();
+	_header->display();
 	_currentView->display();
 }
