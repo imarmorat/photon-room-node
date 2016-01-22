@@ -45,18 +45,23 @@ enum MeasureZone
 struct MeasureCheck
 {
 	virtual bool Test(float value) = 0;
+	virtual void debug() {};
 };
 
 struct NoMeasureCheck : MeasureCheck
 {
-	virtual bool Test(float value) { return true; }
+	bool Test(float value) { return false; }
 };
 
 struct BoundariesMeasureCheck : MeasureCheck
 {
 	float Min;
 	float Max;
-	virtual bool Test(float value) { return value >= Min && value <= Max; }
+	bool Test(float value) { return value >= Min && value <= Max; }
+	void debug()
+	{
+		Particle.publish("debug", String::format("%f - %f", Min, Max));
+	}
 
 	BoundariesMeasureCheck(float min, float max) : Min(min), Max(max) {}
 };

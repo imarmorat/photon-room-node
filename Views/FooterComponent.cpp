@@ -41,7 +41,7 @@ void FooterComponent::drawViewBar()
 
 	for (int i = 0; i < parentContainer->viewCount; i++)
 	{
-		bool isCurrentView = (i == parentContainer->currentView);
+		bool isCurrentView = (i == parentContainer->currentViewIdx);
 		int ih = indicatorSize * (isCurrentView ? 1 : 0.5) / 2;
 		int ix = startX + indicatorSize / 2 + i * (indicatorSize + horizontalPadding);
 

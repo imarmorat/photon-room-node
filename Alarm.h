@@ -1,21 +1,22 @@
 #ifndef _ALARM_H
 #define _ALARM_H
 
+class AlarmComponent;
+
 class Alarm
 {
 public:
-	Alarm(int buzzerPin, Adafruit_ILI9341 * display);
+	Alarm(int buzzerPin, AlarmComponent * alarmComponent);
 	void Init(MeasureMeta** measures);
 	MeasureZone CheckForAlerts();
-	void TriggerAlarm();
-	void DisableAlarm();
-	void DisplayAlerts();
+	void TriggerAlarm(Container * container);
+	void DisableAlarm(Container * container);
 	bool IsTriggered();
-	int GetLevelCount(MeasureZone level);
+	static int GetLevelCount(MeasureMeta** measures, MeasureZone level);
 
 private:
 	int _buzzerPin;
-	Adafruit_ILI9341 * _display;
+	AlarmComponent * _alarmComponent;
 	MeasureMeta ** _measures;
 	bool _isOn = false;
 };

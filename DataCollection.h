@@ -42,6 +42,7 @@ public:
 		WarningCheck = warning;
 		ErrorCheck = error;
 		canRaiseAlarm = true;
+		latestLevel = MeasureZone_Normal;
 	}
 
 	//
@@ -66,7 +67,7 @@ public:
 	void Update()
 	{
 		latestValue = DataCollector->Collect();
-		latestLevel = CheckAgainstLevels();
+		latestLevel = CheckAgainstLevels(latestValue);
 
 		unsigned long t = Time.now();
 
@@ -83,8 +84,6 @@ public:
 		}
 		
 		timeOfSampling = t;
-
-		Particle.publish("events.measures.capture", String::format("%f", latestValue));
 	}
 
 private:
@@ -94,12 +93,12 @@ private:
 
 	//
 	// Checks the latest value against the defined zones
-	MeasureZone CheckAgainstLevels()
+	MeasureZone CheckAgainstLevels(float value)
 	{
-		if (!ErrorCheck->Test(latestValue))
+		if (ErrorCheck->Test(value))
 			return MeasureZone_Critical;
 
-		if (!WarningCheck->Test(latestValue))
+		if (WarningCheck->Test(value))
 			return MeasureZone_Warning;
 
 		return MeasureZone_Normal;

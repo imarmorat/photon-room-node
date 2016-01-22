@@ -24,6 +24,7 @@
 #include "Views\Component.h"
 #include "Views\Container.h"
 #include "Views\SplashComponent.h"
+#include "Views\AlarmComponent.h"
 #include "DataCollection.h"
 #include "Alarm.h"
 #include "MeasureDefinitions.h"
@@ -47,7 +48,6 @@ General declarations
 Adafruit_ILI9341 display = Adafruit_ILI9341(A2, D6, A1);
 Adafruit_BME280 bme;
 DataCollectorManager dataCollectorManager(D7);
-Alarm alarm(D4, &display);
 MeasureMeta** measures = (MeasureMeta**)malloc(3 * sizeof(MeasureMeta*));
 QueueList<Action> actionsQueue;
 
@@ -78,8 +78,8 @@ StatComponent statsComponent;
 Measures declarations
 */
 TemperatureDataCollector tempDataCollector(&bme);
-BoundariesMeasureCheck temperatureWarningBoundaries = BoundariesMeasureCheck(10.0, 29.0);
-BoundariesMeasureCheck temperatureCriticalBoundaries = BoundariesMeasureCheck(30.0, 999.0);
+BoundariesMeasureCheck temperatureWarningBoundaries = BoundariesMeasureCheck(27.0, 32.0);
+BoundariesMeasureCheck temperatureCriticalBoundaries = BoundariesMeasureCheck(32.0, 999.0);
 MeasureMeta temperatureMeasure = MeasureMeta(
 	1,
 	&temperatureWarningBoundaries, // warning
@@ -94,8 +94,8 @@ PressureDataCollector pressureDataCollector(&bme);
 MeasureMeta pressureMeasure = MeasureMeta(3, &pressureDataCollector, "%4.0f");
 
 AnalogDataCollector mq2DataCollector(A0);
-BoundariesMeasureCheck mq2WarningBoundaries = BoundariesMeasureCheck(100.0, 300.0);
-BoundariesMeasureCheck mq2CriticalBoundaries = BoundariesMeasureCheck(300.0, 999999.0);
+BoundariesMeasureCheck mq2WarningBoundaries = BoundariesMeasureCheck(1000.0, 3000.0);
+BoundariesMeasureCheck mq2CriticalBoundaries = BoundariesMeasureCheck(3000.0, 999999.0);
 MeasureMeta mq2Measure = MeasureMeta(
 	4, 
 	&mq2WarningBoundaries,
@@ -108,7 +108,8 @@ AllSensorDataComponent2 temperatureView(&temperatureMeasure);
 AllSensorDataComponent2 humidityView(&humidityMeasure);
 AllSensorDataComponent2 pressureView(&pressureMeasure);
 AllSensorDataComponent2 mq2View(&mq2Measure);
-
+AlarmComponent alarmComponent(measures);
+Alarm alarm(D4, &alarmComponent);
 
 /*
 Few issues worth mentioning:
@@ -153,13 +154,13 @@ void onButton2Pressed()
 
 void startAlarm()
 {
-	alarm.TriggerAlarm();
+	alarm.TriggerAlarm(&container);
 	actionsQueue.push(Event_AlarmTriggered);
 }
 
 void stopAlarm()
 {
-	alarm.DisableAlarm();
+	alarm.DisableAlarm(&container);
 	actionsQueue.push(Event_AlarmStopped);
 }
 
@@ -169,7 +170,7 @@ void onMeasureCollectionDone(MeasureMeta * measure)
 	Udp.write(String::format("%s,device=%s,sensor=%s value=%f", INFLUXDB_DB, DEVICE_ID,  measure->metricName, measure->latestValue));
 	Udp.endPacket();
 
-	if (alarm.CheckForAlerts() != MeasureZone_Normal)
+	if (alarm.CheckForAlerts() != MeasureZone_Normal && !alarm.IsTriggered())
 	{
 		actionsQueue.clear();
 		actionsQueue.push(Event_StartAlarmRequested);
@@ -185,7 +186,7 @@ void onCollectionTimerElapsed()
 
 	//
 	// stop the alarm if any of the sensors triggered it
-	if (alarm.CheckForAlerts() == MeasureZone_Normal)
+	if (alarm.CheckForAlerts() == MeasureZone_Normal && alarm.IsTriggered())
 	{
 		actionsQueue.clear();
 		actionsQueue.push(Event_StopAlarmRequested);
@@ -208,6 +209,10 @@ void onOperationalMetricsTimerElapsed()
 
 	Udp.beginPacket(zookeeperIP, zookeeperPort);
 	Udp.write(String::format("%s,device=%s,sensor=device-freememory value=%d", INFLUXDB_DB, DEVICE_ID, System.freeMemory()));
+	Udp.endPacket();
+
+	Udp.beginPacket(zookeeperIP, zookeeperPort);
+	Udp.write(String::format("%s,device=%s,sensor=alarm-status value=%d", INFLUXDB_DB, DEVICE_ID, alarm.IsTriggered() ? 1 : 0));
 	Udp.endPacket();
 }
 
@@ -309,20 +314,17 @@ void loop()
 
 	Action actionToDo = actionsQueue.pop();
 
-	switch (actionToDo)
-	{
-		case Action_None: break;
-		case Event_StartAlarmRequested: startAlarm(); break;
-		case Event_StopAlarmRequested: stopAlarm(); break;
-		default: 
-			if (actionToDo == Event_Button1Pressed && alarm.IsTriggered())
-				stopAlarm();
-			else			
-				// anything that is not handled by the loop code is propagated to the container
-				if (!alarm.IsTriggered())
-					actionToDo = container.handleEvent(actionToDo);
-			break;
-	}
+	while (actionToDo != Action_None)
+		switch (actionToDo)
+		{
+			case Action_None: break;
+			case Event_StartAlarmRequested: startAlarm(); actionToDo = Action_None;  break;
+			case Event_StopAlarmRequested: stopAlarm(); actionToDo = Action_None; break;
+			case Event_MeasureCollectionCompleted: container.refresh(); actionToDo = Action_None; break;
+			default: 
+				actionToDo = container.handleEvent(actionToDo);
+				break;
+		}
 }
 
 

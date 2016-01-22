@@ -23,7 +23,9 @@ void Container::init(Adafruit_ILI9341 * display)
 	{
 		_views[i]->init(_display, 0, _header->height + 1, 240 - (_header->height + _footer->height), 320);
 	}
-	_views[0]->display();
+
+	_currentView = _views[0];
+	_currentView->display();
 }
 
 void Container::setHeader(Component* header) { _header = header; _header->parentContainer = this; }
@@ -46,12 +48,10 @@ void Container::addView(Component* view)
 
 Action Container::handleEvent(Action action)
 {
-	noInterrupts();
-
 	// propagate the action down to each component
 	Action ah = _header->handleEvent(action);
 	Action af = _footer->handleEvent(action);
-	Action av = _views[currentView]->handleEvent(action);	
+	Action av = _currentView->handleEvent(action);	
 
 	if (ah == Action_None && af == Action_None && av == Action_None)
 	{
@@ -66,23 +66,37 @@ Action Container::handleEvent(Action action)
 				switchView(); 
 				break;
 		}
-	}
 
-	interrupts();
-	
-	return Action_None;
+		return Action_None;
+	}
+	else
+		return av != Action_None ? av : (af != Action_None ? af : ah);
 }
 
 void Container::refresh()
 {
-	_views[currentView]->refresh();
+	_currentView->refresh();
 }
 
 void Container::switchView()
 {
-	currentView++;
-	if (currentView >= viewCount)
-		currentView = 0;
+	currentViewIdx++;
+	if (currentViewIdx >= viewCount)
+		currentViewIdx = 0;
 
-	_views[currentView]->display();
+	_currentView = _views[currentViewIdx];
+	_currentView->display();
+}
+
+void Container::displayPopup(Component * component)
+{
+	_currentView = component;
+	_currentView->init(_display, 0, _header->height + 1, 240 - (_header->height + _footer->height), 320);
+	_currentView->display();
+}
+
+void Container::hidePopup()
+{
+	_currentView = _views[currentViewIdx];
+	_currentView->display();
 }
