@@ -66,6 +66,23 @@ struct BoundariesMeasureCheck : MeasureCheck
 	BoundariesMeasureCheck(float min, float max) : Min(min), Max(max) {}
 };
 
+struct Icon
+{
+	const unsigned int * data;
+	int offsetTopX;
+	int offsetTopY;
+	int offsetBottomX;
+	int offsetBottomY;
+
+	Icon(const unsigned int * data, int offsetTopX, int offsetTopY, int offsetBottomX, int offsetBottomY)
+	{
+		this->data = data;
+		this->offsetTopX = offsetTopX;
+		this->offsetTopY = offsetTopY;
+		this->offsetBottomX = offsetBottomX;
+		this->offsetBottomY = offsetBottomY;
+	}
+};
 
 
 #endif

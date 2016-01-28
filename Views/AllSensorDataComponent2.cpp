@@ -46,7 +46,7 @@ void AllSensorDataComponent2::refresh()
 	float angle = 2 * PI * (value - min) / (max - min);
 
 
-	CircleProgressBar_draw(_display, xc, yc, inner, outer, -1, 0x0210, angle);
+	CircleProgressBar_draw(_display, xc, yc, inner, outer, convertRGB888toRGB565(0x050505), 0x0210, angle);
 	//CircleProgressBar_draw(_display, xc, yc, inner, outer, 0x1082, 0x0210, angle);
 
 	_display->setCursor(180, 40);
@@ -58,13 +58,13 @@ void AllSensorDataComponent2::refresh()
 	_display->setTextSize(3);
 	_display->setCursor(180 + arrowupIcon_width + 3, 80);
 	_display->println(String::format(_measure->format, _measure->dayMax));
-	drawBitmap(_display, 180, 80, arrowupIcon_height, arrowupIcon_width, &arrowupIcon[0]);
+	//drawBitmap(_display, 180, 80, arrowupIcon_height, arrowupIcon_width, &arrowupIcon[0]);
 
 	_display->setCursor(180 + arrowupIcon_width + 3, 110);
 	_display->println(String::format(_measure->format, _measure->dayMin));
-	drawBitmap(_display, 180, 110, arrowdownIcon_height, arrowdownIcon_width, &arrowdownIcon[0]);
+	//drawBitmap(_display, 180, 110, arrowdownIcon_height, arrowdownIcon_width, &arrowdownIcon[0]);
 
-	drawBitmap(_display, xc - 64 / 2, yc - 64 / 2, 64, 64, &_measure->iconData64[0]);
+	drawBitmap(_display, xc - 64 / 2, yc - 64 / 2, 64, 64, _measure->icon64);
 	
 
 	//

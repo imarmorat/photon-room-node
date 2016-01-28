@@ -1,6 +1,7 @@
 #include "../Adafruit_mfGFX/Adafruit_mfGFX.h"
 #include "../Adafruit_ILI9341/Adafruit_ILI9341.h"
 #include "math.h"
+#include "../general.h"
 //#include "drawUtils.h"
 
 #define PI 3.14159265359
@@ -56,11 +57,19 @@ uint16_t convertRGB888toRGB565(int color)
 	return convertRGB888toRGB565(color, 0);
 }
 
-void drawBitmap(Adafruit_ILI9341* display, int x, int y, int height, int width, const unsigned int * bitmap)
+void drawBitmap(Adafruit_ILI9341* display, int x, int y, int height, int width, Icon * icon, uint16_t bgColor)
 {
-	for (int i = 0; i < height; i++)
-		for (int j = 0; j < width; j++)
-			display->drawPixel(x + i, y + j, convertRGB888toRGB565(bitmap[i * width + j], 0));
+	for (int i = 0; i < height - (icon->offsetBottomX + icon->offsetTopX); i++)
+		for (int j = 0; j < width - (icon->offsetBottomY + icon->offsetTopY); j++)
+			display->drawPixel(
+				x + j + icon->offsetTopY, 
+				y + i + icon->offsetTopX, 
+				convertRGB888toRGB565(icon->data[i * (width - icon->offsetBottomY - icon->offsetTopY) + j], bgColor));
+}
+
+void drawBitmap(Adafruit_ILI9341* display, int x, int y, int height, int width, Icon * icon)
+{
+	drawBitmap(display, x, y, height, width, icon, 0);
 }
 
 //

@@ -78,7 +78,7 @@ void AlarmComponent::display()
 		//
 		// icon
 		yj += verticalSpacing + 7 * headerTextSize;
-		drawBitmap(_display, xi + measureBoxWidth / 2 - iconSize / 2, yj, iconSize, iconSize, _measures[i]->iconData32);
+		drawBitmap(_display, xi + measureBoxWidth / 2 - iconSize / 2, yj, iconSize, iconSize, _measures[i]->icon32);
 
 		//
 		// latest value

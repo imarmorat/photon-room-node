@@ -5,20 +5,19 @@
 #include "Adafruit_BME280\Adafruit_BME280.h"
 #include "Adafruit_BME280\Adafruit_Sensor.h"
 
-#include "Views\icons\humidity-icon-64.h"
+#include "Views\icons\humidity64.h"
 #include "Views\icons\humidity32.h"
-#include "Views\icons\temperature-icon-64.h"
+#include "Views\icons\temperature64.h"
 #include "Views\icons\temperature32.h"
-#include "Views\icons\pressure-icon-64.h"
+#include "Views\icons\pressure64.h"
 #include "Views\icons\pressure32.h"
-//#include "Views\icons\mq2-64.h"
-#include "Views\icons\mq2-32.h"
+#include "Views\icons\gas64.h"
+#include "Views\icons\gas32.h"
 
 #include "Sensors\Bme280DataCollector.h"
 #include "Sensors\AnalogDataCollector.h"
 #include "Views\AllSensorDataComponent.h"
 #include "Views\AllSensorDataComponent2.h"
-#include "Views\StatComponent.h"
 #include "Views\HeaderComponent.h"
 #include "Views\FooterComponent.h"
 #include "Views\Component.h"
@@ -71,7 +70,6 @@ Container container;
 HeaderComponent headerComponent;
 FooterComponent footerComponent;
 SplashComponent splashComponent;
-StatComponent statsComponent;
 
 /*
 Measures declarations
@@ -93,8 +91,8 @@ PressureDataCollector pressureDataCollector(&bme);
 MeasureMeta pressureMeasure = MeasureMeta(3, &pressureDataCollector, "%4.0f");
 
 AnalogDataCollector mq2DataCollector(A0);
-BoundariesMeasureCheck mq2WarningBoundaries = BoundariesMeasureCheck(1000.0, 3000.0);
-BoundariesMeasureCheck mq2CriticalBoundaries = BoundariesMeasureCheck(3000.0, 999999.0);
+BoundariesMeasureCheck mq2WarningBoundaries = BoundariesMeasureCheck(10000.0, 20000.0);
+BoundariesMeasureCheck mq2CriticalBoundaries = BoundariesMeasureCheck(20000.0, 999999.0);
 MeasureMeta mq2Measure = MeasureMeta(
 	4, 
 	&mq2WarningBoundaries,
@@ -224,32 +222,32 @@ void setup()
 	temperatureMeasure.metricName = "temperature";
 	temperatureMeasure.progressBarMin = 5;
 	temperatureMeasure.progressBarMax = 35;
-	temperatureMeasure.iconData64 = &temperatureIcon64[0];
-	temperatureMeasure.iconData32 = &temperature32[0];
+	temperatureMeasure.icon64 = new Icon(&temperature64[0], temperature64_offsetTopX, temperature64_offsetTopY, temperature64_offsetBottomX, temperature64_offsetBottomY);
+	temperatureMeasure.icon32 = new Icon(&temperature32[0], temperature32_offsetTopX, temperature32_offsetTopY, temperature32_offsetBottomX, temperature32_offsetBottomY);
 
 	humidityMeasure.name = "Humidity";
 	humidityMeasure.shortName = "HUM";
 	humidityMeasure.metricName = "humidity";
 	humidityMeasure.progressBarMin = 0;
 	humidityMeasure.progressBarMax = 100;
-	humidityMeasure.iconData64 = &humidityIcon64[0];
-	humidityMeasure.iconData32 = &humidity32[0];
+	humidityMeasure.icon64 = new Icon(&humidity64[0], humidity64_offsetTopX, humidity64_offsetTopY, humidity64_offsetBottomX, humidity64_offsetBottomY);
+	humidityMeasure.icon32 = new Icon(&humidity32[0], humidity32_offsetTopX, humidity32_offsetTopY, humidity32_offsetBottomX, humidity32_offsetBottomY);
 
 	pressureMeasure.name = "Pressure";
 	pressureMeasure.shortName = "PRESS";
 	pressureMeasure.metricName = "pressure";
 	pressureMeasure.progressBarMin = 950;
 	pressureMeasure.progressBarMax = 1200;
-	pressureMeasure.iconData64 = &pressureIcon64[0];
-	pressureMeasure.iconData32 = &pressure32[0];
+	pressureMeasure.icon64 = new Icon(&pressure64[0], pressure64_offsetTopX, pressure64_offsetTopY, pressure64_offsetBottomX, pressure64_offsetBottomY);
+	pressureMeasure.icon32 = new Icon(&pressure32[0], pressure32_offsetTopX, pressure32_offsetTopY, pressure32_offsetBottomX, pressure32_offsetBottomY);
 
 	mq2Measure.name = "MQ-2";
 	mq2Measure.shortName = "CO GAS";
 	mq2Measure.metricName = "MQ-2";
 	mq2Measure.progressBarMin = 0;
 	mq2Measure.progressBarMax = 9999;
-	mq2Measure.iconData64 = &pressureIcon64[0];
-	mq2Measure.iconData32 = &mq232[0];
+	mq2Measure.icon64 = new Icon(&gas64[0], gas64_offsetTopX, gas64_offsetTopY, gas64_offsetBottomX, gas64_offsetBottomY);
+	mq2Measure.icon32 = new Icon(&gas32[0], gas32_offsetTopX, gas32_offsetTopY, gas32_offsetBottomX, gas32_offsetBottomY);
 
 	dataPublisher.init();
 
