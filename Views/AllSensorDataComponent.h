@@ -14,7 +14,7 @@ class AllSensorDataComponent : public Component
 
 private:
 	MeasureMeta** _measures;
-	void displayMeasure(Adafruit_ILI9341* display, bool isFirstTime, int x, int y, int width, int height, MeasureMeta * measure);
+	void displayMeasure(Adafruit_ILI9341* display, bool isFirstTime, int x, int y, int width, int height, MeasureMeta * measure, uint16_t bgColor);
 	void draw(bool isFirstTime);
 };
 

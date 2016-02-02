@@ -1,7 +1,7 @@
 #include "Adafruit_ILI9341\Adafruit_ILI9341.h"
 #include "Adafruit_BME280\Adafruit_BME280.h"
 #include "../DataCollection.h"
-#include "AllSensorDataComponent2.h"
+#include "SingleSensorDataComponent.h"
 #include "Component.h"
 #include <math.h>
 #include "..\utils.h"
@@ -16,18 +16,18 @@ void CircleProgressBar_draw(Adafruit_ILI9341 * _display, int xc, int yc, int inn
 // todo: I dont like having external static used here, need to get them passed through at some point
 // e.g. by passing Measures + some id
 
-AllSensorDataComponent2::AllSensorDataComponent2(MeasureMeta* measure) : _measure(measure)
+SingleSensorDataComponent::SingleSensorDataComponent(MeasureMeta* measure) : _measure(measure)
 {
     /* remember to be extra careful here, had some crashes on photon when doing some init things here */
 }
 
-void AllSensorDataComponent2::display()
+void SingleSensorDataComponent::display()
 {
     _display->fillRect(x, y, width, height, ILI9341_BLACK);
 	refresh();
 }
 
-Action AllSensorDataComponent2::handleEvent(Action action)
+Action SingleSensorDataComponent::handleEvent(Action action)
 {
 	if (action == Event_MeasureCollectionCompleted)
 		refresh();
@@ -35,7 +35,7 @@ Action AllSensorDataComponent2::handleEvent(Action action)
 	return Action_None;
 }
 
-void AllSensorDataComponent2::refresh()
+void SingleSensorDataComponent::refresh()
 {
 	int padding = 2;
 	int xc = height / 2 + x + padding - 15;

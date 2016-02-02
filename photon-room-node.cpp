@@ -16,8 +16,9 @@
 
 #include "Sensors\Bme280DataCollector.h"
 #include "Sensors\AnalogDataCollector.h"
+#include "Sensors\MqSeriesDataCollector.h"
 #include "Views\AllSensorDataComponent.h"
-#include "Views\AllSensorDataComponent2.h"
+#include "Views\SingleSensorDataComponent.h"
 #include "Views\HeaderComponent.h"
 #include "Views\FooterComponent.h"
 #include "Views\Component.h"
@@ -47,7 +48,7 @@ General declarations
 Adafruit_ILI9341 display = Adafruit_ILI9341(A2, D6, A1);
 Adafruit_BME280 bme;
 DataCollectorManager dataCollectorManager(D7);
-MeasureMeta** measures = (MeasureMeta**)malloc(3 * sizeof(MeasureMeta*));
+MeasureMeta** measures = (MeasureMeta**)malloc(MEASURE_COUNT * sizeof(MeasureMeta*));
 QueueList<Action> actionsQueue;
 
 /*
@@ -78,33 +79,40 @@ TemperatureDataCollector tempDataCollector(&bme);
 BoundariesMeasureCheck temperatureWarningBoundaries = BoundariesMeasureCheck(27.0, 32.0);
 BoundariesMeasureCheck temperatureCriticalBoundaries = BoundariesMeasureCheck(32.0, 999.0);
 MeasureMeta temperatureMeasure = MeasureMeta(
-	1,
+	TEMPERATURE_MEASURE_ID,
 	&temperatureWarningBoundaries, // warning
 	&temperatureCriticalBoundaries, // error
 	&tempDataCollector,
 	"%2.1fC");
 
 HumidityDataCollector humidityDataCollector(&bme);
-MeasureMeta humidityMeasure = MeasureMeta(2, &humidityDataCollector, "%2.1f");
+MeasureMeta humidityMeasure = MeasureMeta(HUMIDITY_MEASURE_ID, &humidityDataCollector, "%2.1f");
 
 PressureDataCollector pressureDataCollector(&bme);
-MeasureMeta pressureMeasure = MeasureMeta(3, &pressureDataCollector, "%4.0f");
+MeasureMeta pressureMeasure = MeasureMeta(PRESSURE_MEASURE_ID, &pressureDataCollector, "%4.0f");
 
-AnalogDataCollector mq2DataCollector(A0);
-BoundariesMeasureCheck mq2WarningBoundaries = BoundariesMeasureCheck(10000.0, 20000.0);
-BoundariesMeasureCheck mq2CriticalBoundaries = BoundariesMeasureCheck(20000.0, 999999.0);
+MqSeriesDataCollector mq7DataCollector(A0);
+BoundariesMeasureCheck mq7WarningBoundaries = BoundariesMeasureCheck(10000.0, 20000.0);
+BoundariesMeasureCheck mq7CriticalBoundaries = BoundariesMeasureCheck(20000.0, 999999.0);
+MeasureMeta mq7Measure = MeasureMeta(
+	MQ7_MEASURE_ID, 
+	&mq7WarningBoundaries,
+	&mq7CriticalBoundaries,
+	&mq7DataCollector, 
+	"%4.1f");
+
+AnalogDataCollector mq2DataCollector(DAC);
 MeasureMeta mq2Measure = MeasureMeta(
-	4, 
-	&mq2WarningBoundaries,
-	&mq2CriticalBoundaries,
-	&mq2DataCollector, 
+	MQ2_MEASURE_ID,
+	&mq2DataCollector,
 	"%4.1f");
 
 AllSensorDataComponent summaryView(measures);
-AllSensorDataComponent2 temperatureView(&temperatureMeasure);
-AllSensorDataComponent2 humidityView(&humidityMeasure);
-AllSensorDataComponent2 pressureView(&pressureMeasure);
-AllSensorDataComponent2 mq2View(&mq2Measure);
+SingleSensorDataComponent temperatureView(&temperatureMeasure);
+SingleSensorDataComponent humidityView(&humidityMeasure);
+SingleSensorDataComponent pressureView(&pressureMeasure);
+SingleSensorDataComponent mq2View(&mq2Measure);
+SingleSensorDataComponent mq7View(&mq7Measure);
 AlarmComponent alarmComponent(measures);
 Alarm alarm(D4, &alarmComponent);
 
@@ -206,6 +214,9 @@ void onAutoRotateViewTimerElapsed()
 		actionsQueue.push(Action_SwitchToNextView);
 }
 
+void nothing(MeasureMeta * measure)
+{}
+
 /*
 PHOTON SETUP
 */
@@ -215,6 +226,7 @@ void setup()
 	measures[TEMPERATURE_MEASURE_ID] = &temperatureMeasure;
 	measures[HUMIDITY_MEASURE_ID] = &humidityMeasure;
 	measures[PRESSURE_MEASURE_ID] = &pressureMeasure;
+	measures[MQ7_MEASURE_ID] = &mq7Measure;
 	measures[MQ2_MEASURE_ID] = &mq2Measure;
 
 	temperatureMeasure.name = "Temperature";
@@ -242,12 +254,20 @@ void setup()
 	pressureMeasure.icon32 = new Icon(&pressure32[0], pressure32_offsetTopX, pressure32_offsetTopY, pressure32_offsetBottomX, pressure32_offsetBottomY);
 
 	mq2Measure.name = "MQ-2";
-	mq2Measure.shortName = "CO GAS";
+	mq2Measure.shortName = "CNG GAS";
 	mq2Measure.metricName = "MQ-2";
 	mq2Measure.progressBarMin = 0;
 	mq2Measure.progressBarMax = 9999;
 	mq2Measure.icon64 = new Icon(&gas64[0], gas64_offsetTopX, gas64_offsetTopY, gas64_offsetBottomX, gas64_offsetBottomY);
 	mq2Measure.icon32 = new Icon(&gas32[0], gas32_offsetTopX, gas32_offsetTopY, gas32_offsetBottomX, gas32_offsetBottomY);
+
+	mq7Measure.name = "MQ-7";
+	mq7Measure.shortName = "CO GAS";
+	mq7Measure.metricName = "MQ-7";
+	mq7Measure.progressBarMin = 0;
+	mq7Measure.progressBarMax = 9999;
+	mq7Measure.icon64 = new Icon(&gas64[0], gas64_offsetTopX, gas64_offsetTopY, gas64_offsetBottomX, gas64_offsetBottomY);
+	mq7Measure.icon32 = new Icon(&gas32[0], gas32_offsetTopX, gas32_offsetTopY, gas32_offsetBottomX, gas32_offsetBottomY);
 
 	dataPublisher.init();
 
@@ -266,6 +286,7 @@ void setup()
 	container.addView(&temperatureView);
 	container.addView(&humidityView);
 	container.addView(&pressureView);
+	container.addView(&mq7View);
 	container.addView(&mq2View);
 	container.init(&display);
 

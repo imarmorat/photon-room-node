@@ -11,6 +11,9 @@ public:
 	void Init();
 	float Collect();
 
+protected:
+	virtual float Transform(float value);
+
 private:
 	int _analogPin;
 };

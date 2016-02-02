@@ -8,7 +8,8 @@
 #define HUMIDITY_MEASURE_ID	1
 #define PRESSURE_MEASURE_ID	2
 #define MQ2_MEASURE_ID	3
-#define MEASURE_COUNT 4
+#define MQ7_MEASURE_ID	4
+#define MEASURE_COUNT 5
 
 enum Action {
 	Action_None = 0,
@@ -32,7 +33,7 @@ enum Action {
 
 enum BoardInput : int8_t {
 	BoardInput_Button1 = D3, 
-	BoardInput_Button2 = D5 
+	BoardInput_Button2 = D2
 };
 
 enum MeasureZone

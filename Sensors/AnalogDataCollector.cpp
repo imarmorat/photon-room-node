@@ -1,5 +1,4 @@
 #include "AnalogDataCollector.h"
-#include <math.h>
 
 AnalogDataCollector::AnalogDataCollector(int8_t analogPin)
 {
@@ -13,21 +12,13 @@ void AnalogDataCollector::Init()
 
 float AnalogDataCollector::Collect()
 {
-
-	//
-	// Robtillaart's approach
-	// http://forum.arduino.cc/index.php/topic,55780.0.html
-	float val = analogRead(_analogPin) * 0.0008; // convert into voltage
-
-	float rs = 20000.0 * (5.0 - val) / val; // 5.0 is the vInput
-	float ratio = rs / 10000.0;
-	float ppm = 37143 * pow(ratio, -3.178);
-
-	return ppm;
+	float val = Transform(analogRead(_analogPin));
+	return val;
 }
 
 //
-// option 1: each sensor class do the check and call AlarmManager if necessary
-// option 2: alarmmanager does the check but need some more structure for each sensor/measure
-// 
-//
+// by default, no transformation, this will be overriden if necessary
+float AnalogDataCollector::Transform(float input)
+{
+	return input;
+}

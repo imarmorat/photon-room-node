@@ -4,6 +4,7 @@
 #include "AllSensorDataComponent.h"
 #include "Component.h"
 #include "drawUtils.h"
+#include <math.h>
 
 AllSensorDataComponent::AllSensorDataComponent(MeasureMeta** measures) : _measures(measures)
 {
@@ -31,24 +32,33 @@ Action AllSensorDataComponent::handleEvent(Action action)
 void AllSensorDataComponent::draw(bool isFirstTime)
 {
 	int nbRows = 2;
-	int nbColumns = MEASURE_COUNT / nbRows;
+	int nbColumns = MEASURE_COUNT / nbRows + (MEASURE_COUNT % nbRows != 0); // the modulo is a trick to round up
 
 	int boxHeight = height / nbRows;
 	int boxWidth = width / nbColumns;
+	uint16_t bgColor = convertRGB888toRGB565(0x050505);
 
 	if (isFirstTime)
-		_display->fillRect(x, y, width, height, convertRGB888toRGB565(0x303030, ILI9341_BLACK));
+		_display->fillRect(x, y, width, height, bgColor);
 	
 	int measureId = 0;
 	for (int i = 0; i < nbColumns; i++)
 		for (int j = 0; j < nbRows; j++)
 		{
-			displayMeasure(_display, isFirstTime, x + boxWidth * i, y + boxHeight * j, boxWidth, boxHeight, measureId < MEASURE_COUNT ? _measures[measureId] : NULL);
-			measureId++;
+			if (measureId >= MEASURE_COUNT)
+			{
+				_display->fillRect(x + boxWidth * i, y + boxHeight * j, boxWidth, boxHeight, bgColor);
+				return;
+			}
+			else
+			{
+				displayMeasure(_display, isFirstTime, x + boxWidth * i, y + boxHeight * j, boxWidth, boxHeight, measureId < MEASURE_COUNT ? _measures[measureId] : NULL, bgColor);
+				measureId++;
+			}
 		}
 }
 
-void AllSensorDataComponent::displayMeasure(Adafruit_ILI9341* display, bool isFirstTime, int x, int y, int width, int height, MeasureMeta * measure)
+void AllSensorDataComponent::displayMeasure(Adafruit_ILI9341* display, bool isFirstTime, int x, int y, int width, int height, MeasureMeta * measure, uint16_t bgColor)
 {
 	if (measure == NULL)
 		return;
@@ -56,14 +66,16 @@ void AllSensorDataComponent::displayMeasure(Adafruit_ILI9341* display, bool isFi
 	int nbComponents = 3; // short name, icon and value
 	int textHeight = 14; int iconHeight = 32; int charWidth = 10;
 	int padding = (height - (textHeight * 2 + iconHeight)) / (nbComponents + 1);
+	uint16_t meausureNameColor = convertRGB888toRGB565(0x353535);
+	uint16_t measureValueColor = ILI9341_GREEN;
 
 	if (isFirstTime)
-		display->fillRect(x, y, width, height, convertRGB888toRGB565(0x050505));
+		display->fillRect(x, y, width, height, bgColor);
 	
 	int yi = y + padding;
 
 	display->setTextSize(2);
-	display->setTextColor(convertRGB888toRGB565(0x353535), convertRGB888toRGB565(0x050505));
+	display->setTextColor(meausureNameColor, bgColor);
 
 	// short name
 	if (isFirstTime)
@@ -79,7 +91,7 @@ void AllSensorDataComponent::displayMeasure(Adafruit_ILI9341* display, bool isFi
 	{
 		if (measure->icon32 != NULL)
 		{
-			drawBitmap(display, x + width / 2 - iconHeight / 2, yi, iconHeight, iconHeight, measure->icon32, convertRGB888toRGB565(0x050505));
+			drawBitmap(display, x + width / 2 - iconHeight / 2, yi, iconHeight, iconHeight, measure->icon32, bgColor);
 		}
 		else
 		{
@@ -92,10 +104,10 @@ void AllSensorDataComponent::displayMeasure(Adafruit_ILI9341* display, bool isFi
 	
 	if (!isFirstTime)
 		// need to erase previous content as might leave leftovers
-		display->fillRect(x, yi, width, textHeight, convertRGB888toRGB565(0x050505));
+		display->fillRect(x, yi, width, textHeight, bgColor);
 	
 	String  value = String::format(measure->format, measure->latestValue);
-	display->setTextColor(ILI9341_GREEN, convertRGB888toRGB565(0x050505));
+	display->setTextColor(measureValueColor, bgColor);
 	display->setCursor(x + width / 2 - value.length()*charWidth/2, yi);
 	display->println(value);
 }
