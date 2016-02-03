@@ -86,26 +86,28 @@ MeasureMeta temperatureMeasure = MeasureMeta(
 	"%2.1fC");
 
 HumidityDataCollector humidityDataCollector(&bme);
-MeasureMeta humidityMeasure = MeasureMeta(HUMIDITY_MEASURE_ID, &humidityDataCollector, "%2.1f");
+MeasureMeta humidityMeasure = MeasureMeta(HUMIDITY_MEASURE_ID, &humidityDataCollector, "%2.1f%%");
 
 PressureDataCollector pressureDataCollector(&bme);
-MeasureMeta pressureMeasure = MeasureMeta(PRESSURE_MEASURE_ID, &pressureDataCollector, "%4.0f");
+MeasureMeta pressureMeasure = MeasureMeta(PRESSURE_MEASURE_ID, &pressureDataCollector, "%4.0fPa");
 
-MqSeriesDataCollector mq7DataCollector(A0);
-BoundariesMeasureCheck mq7WarningBoundaries = BoundariesMeasureCheck(10000.0, 20000.0);
-BoundariesMeasureCheck mq7CriticalBoundaries = BoundariesMeasureCheck(20000.0, 999999.0);
+AnalogPercentageDataCollector mq7DataCollector(A0);
+BoundariesMeasureCheck mq7WarningBoundaries = BoundariesMeasureCheck(70, 80);
+BoundariesMeasureCheck mq7CriticalBoundaries = BoundariesMeasureCheck(80,100000);
 MeasureMeta mq7Measure = MeasureMeta(
 	MQ7_MEASURE_ID, 
 	&mq7WarningBoundaries,
 	&mq7CriticalBoundaries,
 	&mq7DataCollector, 
-	"%4.1f");
+	"%3.1f%%");
 
-AnalogDataCollector mq2DataCollector(DAC);
+AnalogPercentageDataCollector mq2DataCollector(DAC);
+BoundariesMeasureCheck mq2WarningBoundaries = BoundariesMeasureCheck(70, 80);
+BoundariesMeasureCheck mq2CriticalBoundaries = BoundariesMeasureCheck(80, 100000);
 MeasureMeta mq2Measure = MeasureMeta(
 	MQ2_MEASURE_ID,
 	&mq2DataCollector,
-	"%4.1f");
+	"%3.1f%%");
 
 AllSensorDataComponent summaryView(measures);
 SingleSensorDataComponent temperatureView(&temperatureMeasure);
@@ -257,7 +259,7 @@ void setup()
 	mq2Measure.shortName = "CNG GAS";
 	mq2Measure.metricName = "MQ-2";
 	mq2Measure.progressBarMin = 0;
-	mq2Measure.progressBarMax = 9999;
+	mq2Measure.progressBarMax = 100;
 	mq2Measure.icon64 = new Icon(&gas64[0], gas64_offsetTopX, gas64_offsetTopY, gas64_offsetBottomX, gas64_offsetBottomY);
 	mq2Measure.icon32 = new Icon(&gas32[0], gas32_offsetTopX, gas32_offsetTopY, gas32_offsetBottomX, gas32_offsetBottomY);
 
@@ -265,7 +267,7 @@ void setup()
 	mq7Measure.shortName = "CO GAS";
 	mq7Measure.metricName = "MQ-7";
 	mq7Measure.progressBarMin = 0;
-	mq7Measure.progressBarMax = 9999;
+	mq7Measure.progressBarMax = 100;
 	mq7Measure.icon64 = new Icon(&gas64[0], gas64_offsetTopX, gas64_offsetTopY, gas64_offsetBottomX, gas64_offsetBottomY);
 	mq7Measure.icon32 = new Icon(&gas32[0], gas32_offsetTopX, gas32_offsetTopY, gas32_offsetBottomX, gas32_offsetBottomY);
 
