@@ -68,14 +68,21 @@ void AllSensorDataComponent::displayMeasure(Adafruit_ILI9341* display, bool isFi
 	int padding = (height - (textHeight * 2 + iconHeight)) / (nbComponents + 1);
 	uint16_t meausureNameColor = convertRGB888toRGB565(0x353535);
 	uint16_t measureValueColor = ILI9341_GREEN;
+	uint16_t overridenBgColor = bgColor;
+
+	switch (measure->latestLevel)
+	{
+		case MeasureZone_Warning: overridenBgColor = ALARM_WARNING_COLOR_BG; break;
+		case MeasureZone_Critical: overridenBgColor = ALARM_CRITICAL_COLOR_BG; break;
+	}
 
 	if (isFirstTime)
-		display->fillRect(x, y, width, height, bgColor);
+		display->fillRect(x, y, width, height, overridenBgColor);
 	
 	int yi = y + padding;
 
 	display->setTextSize(2);
-	display->setTextColor(meausureNameColor, bgColor);
+	display->setTextColor(meausureNameColor, overridenBgColor);
 
 	// short name
 	if (isFirstTime)
@@ -91,11 +98,11 @@ void AllSensorDataComponent::displayMeasure(Adafruit_ILI9341* display, bool isFi
 	{
 		if (measure->icon32 != NULL)
 		{
-			drawBitmap(display, x + width / 2 - iconHeight / 2, yi, iconHeight, iconHeight, measure->icon32, bgColor);
+			drawBitmap(display, x + width / 2 - iconHeight / 2, yi, iconHeight, iconHeight, measure->icon32, overridenBgColor);
 		}
 		else
 		{
-			display->fillRect(x + width / 2 - iconHeight / 2, yi, iconHeight, iconHeight, ILI9341_BLACK);
+			display->fillRect(x + width / 2 - iconHeight / 2, yi, iconHeight, iconHeight, overridenBgColor);
 		}
 	}
 
@@ -104,10 +111,10 @@ void AllSensorDataComponent::displayMeasure(Adafruit_ILI9341* display, bool isFi
 	
 	if (!isFirstTime)
 		// need to erase previous content as might leave leftovers
-		display->fillRect(x, yi, width, textHeight, bgColor);
+		display->fillRect(x, yi, width, textHeight, overridenBgColor);
 	
 	String  value = String::format(measure->format, measure->latestValue);
-	display->setTextColor(measureValueColor, bgColor);
+	display->setTextColor(measureValueColor, overridenBgColor);
 	display->setCursor(x + width / 2 - value.length()*charWidth/2, yi);
 	display->println(value);
 }

@@ -10,6 +10,8 @@ Alarm::Alarm(int buzzerPin, AlarmComponent * alarmComponent)
 {
 	_buzzerPin = buzzerPin;
 	_alarmComponent = alarmComponent;
+	_snoozeStartTime = 0;
+	_snoozeDuration = 0;
 }
 
 void Alarm::Init(MeasureMeta ** measures)
@@ -77,4 +79,15 @@ void Alarm::DisableAlarm(Container * container)
 bool Alarm::IsTriggered()
 {
 	return _isOn;
+}
+
+void Alarm::Snooze(uint16_t snoozeDuration)
+{
+	_snoozeStartTime = Time.now();
+	_snoozeDuration = snoozeDuration;
+}
+
+bool Alarm::IsSnoozed() 
+{ 
+	return Time.now() < (_snoozeStartTime + _snoozeDuration);
 }

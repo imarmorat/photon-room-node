@@ -11,6 +11,11 @@
 #define MQ7_MEASURE_ID	4
 #define MEASURE_COUNT 5
 
+#define ALARM_CRITICAL_COLOR_BG ILI9341_RED
+#define ALARM_CRITICAL_COLOR_FG ILI9341_WHITE
+#define ALARM_WARNING_COLOR_BG 0xFA20
+#define ALARM_WARNING_COLOR_FG ILI9341_WHITE
+
 enum Action {
 	Action_None = 0,
 	Action_SwitchToNextView = 1,
@@ -20,6 +25,7 @@ enum Action {
 	Event_StopAlarmRequested = 32,
 	Event_AlarmTriggered = 35,
 	Event_AlarmStopped = 34,
+	Event_AlarmSnoozed = 36,
 
 	//
 	Event_MeasureCollectionStarted = 10,

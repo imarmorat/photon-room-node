@@ -6,11 +6,7 @@
 #include "drawUtils.h"
 #include "../Alarm.h"
 #include "AlarmComponent.h"
-
-#define CRITICAL_COLOR_BG ILI9341_RED
-#define CRITICAL_COLOR_FG ILI9341_WHITE
-#define WARNING_COLOR_BG 0xFA20
-#define WARNING_COLOR_FG ILI9341_WHITE
+#include "../general.h"
 
 AlarmComponent::AlarmComponent(MeasureMeta ** measures)
 {
@@ -25,8 +21,8 @@ void AlarmComponent::display()
 	//
 	// big text alert
 	int messageBoxHeight = 240 / 2;
-	uint16_t mainBgColor = nbCritical != 0 ? CRITICAL_COLOR_BG : WARNING_COLOR_BG;
-	uint16_t mainFgColor = nbCritical != 0 ? CRITICAL_COLOR_FG : WARNING_COLOR_FG;
+	uint16_t mainBgColor = nbCritical != 0 ? ALARM_CRITICAL_COLOR_BG : ALARM_WARNING_COLOR_BG;
+	uint16_t mainFgColor = nbCritical != 0 ? ALARM_CRITICAL_COLOR_FG : ALARM_WARNING_COLOR_FG;
 	_display->fillRect(0, 0, 320, messageBoxHeight, mainBgColor);
 	int textSize = 4; int textHeight = 28;
 	String message = nbCritical > 0 ? "CRITICAL" : "WARNING";
@@ -66,7 +62,7 @@ void AlarmComponent::display()
 			continue;
 
 		int yj = yi;
-		uint16_t boxBgColor = _measures[i]->latestLevel == MeasureZone_Critical ? CRITICAL_COLOR_BG : WARNING_COLOR_BG;
+		uint16_t boxBgColor = _measures[i]->latestLevel == MeasureZone_Critical ? ALARM_CRITICAL_COLOR_BG : ALARM_WARNING_COLOR_BG;
 		_display->fillRect(xi, yi, measureBoxWidth, measureBoxHeight, boxBgColor);
 
 		// header

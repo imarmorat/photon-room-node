@@ -5,6 +5,7 @@
 #include "Adafruit_BME280\Adafruit_BME280.h"
 #include "Adafruit_BME280\Adafruit_Sensor.h"
 
+
 #include "Views\icons\humidity64.h"
 #include "Views\icons\humidity32.h"
 #include "Views\icons\temperature64.h"
@@ -25,8 +26,8 @@
 #include "Views\Container.h"
 #include "Views\SplashComponent.h"
 #include "Views\AlarmComponent.h"
-#include "DataCollection.h"
 #include "Alarm.h"
+#include "DataCollection.h"
 #include "MeasureDefinitions.h"
 #include "queue.h"
 #include "DataPublisher.h"
@@ -65,14 +66,6 @@ bool isAutoRotateViewOn = false;
 Timer autoRotateViewTimer(10000, onAutoRotateViewTimerElapsed);
 
 /*
-Views declarations
-*/
-Container container;
-HeaderComponent headerComponent;
-FooterComponent footerComponent;
-SplashComponent splashComponent;
-
-/*
 Measures declarations
 */
 TemperatureDataCollector tempDataCollector(&bme);
@@ -102,8 +95,8 @@ MeasureMeta mq7Measure = MeasureMeta(
 	"%3.1f%%");
 
 AnalogPercentageDataCollector mq2DataCollector(DAC);
-BoundariesMeasureCheck mq2WarningBoundaries = BoundariesMeasureCheck(70, 80);
-BoundariesMeasureCheck mq2CriticalBoundaries = BoundariesMeasureCheck(80, 100000);
+//BoundariesMeasureCheck mq2WarningBoundaries = BoundariesMeasureCheck(70, 80);
+//BoundariesMeasureCheck mq2CriticalBoundaries = BoundariesMeasureCheck(80, 100000);
 MeasureMeta mq2Measure = MeasureMeta(
 	MQ2_MEASURE_ID,
 	&mq2DataCollector,
@@ -116,7 +109,11 @@ SingleSensorDataComponent pressureView(&pressureMeasure);
 SingleSensorDataComponent mq2View(&mq2Measure);
 SingleSensorDataComponent mq7View(&mq7Measure);
 AlarmComponent alarmComponent(measures);
+FooterComponent footerComponent;
+SplashComponent splashComponent;
 Alarm alarm(D4, &alarmComponent);
+Container container;
+HeaderComponent headerComponent;
 
 /*
 Few issues worth mentioning:
@@ -159,14 +156,18 @@ void onButton2Pressed()
 
 void startAlarm()
 {
-	alarm.TriggerAlarm(&container);
-	actionsQueue.push(Event_AlarmTriggered);
+	if (!alarm.IsSnoozed())
+	{
+		alarm.TriggerAlarm(&container);
+		actionsQueue.push(Event_AlarmTriggered);
+	}
 }
 
-void stopAlarm()
+void snoozeAlarm()
 {
 	alarm.DisableAlarm(&container);
-	actionsQueue.push(Event_AlarmStopped);
+	alarm.Snooze(20);
+	actionsQueue.push(Event_AlarmSnoozed);
 }
 
 void onMeasureCollectionDone(MeasureMeta * measure)
@@ -215,9 +216,6 @@ void onAutoRotateViewTimerElapsed()
 	if (actionsQueue.peek() != Action_SwitchToNextView)
 		actionsQueue.push(Action_SwitchToNextView);
 }
-
-void nothing(MeasureMeta * measure)
-{}
 
 /*
 PHOTON SETUP
@@ -271,6 +269,9 @@ void setup()
 	mq7Measure.icon64 = new Icon(&gas64[0], gas64_offsetTopX, gas64_offsetTopY, gas64_offsetBottomX, gas64_offsetBottomY);
 	mq7Measure.icon32 = new Icon(&gas32[0], gas32_offsetTopX, gas32_offsetTopY, gas32_offsetBottomX, gas32_offsetBottomY);
 
+	alarm.Init(measures);
+	headerComponent.setup(&alarm);
+
 	dataPublisher.init();
 
 	//
@@ -299,7 +300,6 @@ void setup()
 	attachInterrupt(BoardInput_Button1, onButton1Pressed, FALLING);
 	attachInterrupt(BoardInput_Button2, onButton2Pressed, FALLING);
 
-	alarm.Init(measures);
 	
 	dataCollectorManager.Init(measures);
 	Particle.publish("events.photon.setup", "done");
@@ -326,7 +326,7 @@ void loop()
 		{
 			case Action_None: break;
 			case Event_StartAlarmRequested: startAlarm(); actionToDo = Action_None;  break;
-			case Event_StopAlarmRequested: stopAlarm(); actionToDo = Action_None; break;
+			case Event_StopAlarmRequested: snoozeAlarm(); actionToDo = Action_None; break;
 			case Event_MeasureCollectionCompleted: container.refresh(); actionToDo = Action_None; break;
 			default: 
 				actionToDo = container.handleEvent(actionToDo);
