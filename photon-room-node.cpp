@@ -84,30 +84,20 @@ MeasureMeta humidityMeasure = MeasureMeta(HUMIDITY_MEASURE_ID, &humidityDataColl
 PressureDataCollector pressureDataCollector(&bme);
 MeasureMeta pressureMeasure = MeasureMeta(PRESSURE_MEASURE_ID, &pressureDataCollector, "%4.0fPa");
 
-AnalogPercentageDataCollector mq7DataCollector(A0);
-BoundariesMeasureCheck mq7WarningBoundaries = BoundariesMeasureCheck(70, 80);
-BoundariesMeasureCheck mq7CriticalBoundaries = BoundariesMeasureCheck(80,100000);
-MeasureMeta mq7Measure = MeasureMeta(
-	MQ7_MEASURE_ID, 
-	&mq7WarningBoundaries,
-	&mq7CriticalBoundaries,
-	&mq7DataCollector, 
-	"%3.1f%%");
-
-AnalogPercentageDataCollector mq2DataCollector(DAC);
-//BoundariesMeasureCheck mq2WarningBoundaries = BoundariesMeasureCheck(70, 80);
-//BoundariesMeasureCheck mq2CriticalBoundaries = BoundariesMeasureCheck(80, 100000);
-MeasureMeta mq2Measure = MeasureMeta(
-	MQ2_MEASURE_ID,
-	&mq2DataCollector,
-	"%3.1f%%");
+MqSeriesDataCollector mq2DataCollector_smoke(A0);
+MqSeriesDataCollector mq2DataCollector_lpg(A0);
+MqSeriesDataCollector mq2DataCollector_co(A0);
+MeasureMeta mq2Measure_smoke = MeasureMeta(MQ7_SMOKE_MEASURE_ID, &mq2DataCollector_smoke, "%3.1fppm");
+MeasureMeta mq2Measure_lpg = MeasureMeta(MQ7_LPG_MEASURE_ID, &mq2DataCollector_lpg, "%3.1fppm");
+MeasureMeta mq2Measure_co = MeasureMeta(MQ7_CO_MEASURE_ID, &mq2DataCollector_co, "%3.1fppm");
 
 AllSensorDataComponent summaryView(measures);
 SingleSensorDataComponent temperatureView(&temperatureMeasure);
 SingleSensorDataComponent humidityView(&humidityMeasure);
 SingleSensorDataComponent pressureView(&pressureMeasure);
-SingleSensorDataComponent mq2View(&mq2Measure);
-SingleSensorDataComponent mq7View(&mq7Measure);
+SingleSensorDataComponent mq2View_smoke(&mq2Measure_smoke);
+SingleSensorDataComponent mq2View_lpg(&mq2Measure_lpg);
+SingleSensorDataComponent mq2View_co(&mq2Measure_co);
 AlarmComponent alarmComponent(measures);
 FooterComponent footerComponent;
 SplashComponent splashComponent;
@@ -166,7 +156,7 @@ void startAlarm()
 void snoozeAlarm()
 {
 	alarm.DisableAlarm(&container);
-	alarm.Snooze(20);
+	alarm.Snooze(3 * 60);
 	actionsQueue.push(Event_AlarmSnoozed);
 }
 
@@ -226,8 +216,9 @@ void setup()
 	measures[TEMPERATURE_MEASURE_ID] = &temperatureMeasure;
 	measures[HUMIDITY_MEASURE_ID] = &humidityMeasure;
 	measures[PRESSURE_MEASURE_ID] = &pressureMeasure;
-	measures[MQ7_MEASURE_ID] = &mq7Measure;
-	measures[MQ2_MEASURE_ID] = &mq2Measure;
+	measures[MQ7_SMOKE_MEASURE_ID] = &mq2Measure_smoke;
+	measures[MQ7_LPG_MEASURE_ID] = &mq2Measure_lpg;
+	measures[MQ7_CO_MEASURE_ID] = &mq2Measure_co;
 
 	temperatureMeasure.name = "Temperature";
 	temperatureMeasure.shortName = "TEMP";
@@ -253,26 +244,42 @@ void setup()
 	pressureMeasure.icon64 = new Icon(&pressure64[0], pressure64_offsetTopX, pressure64_offsetTopY, pressure64_offsetBottomX, pressure64_offsetBottomY);
 	pressureMeasure.icon32 = new Icon(&pressure32[0], pressure32_offsetTopX, pressure32_offsetTopY, pressure32_offsetBottomX, pressure32_offsetBottomY);
 
-	mq2Measure.name = "MQ-2";
-	mq2Measure.shortName = "CNG GAS";
-	mq2Measure.metricName = "MQ-2";
-	mq2Measure.progressBarMin = 0;
-	mq2Measure.progressBarMax = 100;
-	mq2Measure.icon64 = new Icon(&gas64[0], gas64_offsetTopX, gas64_offsetTopY, gas64_offsetBottomX, gas64_offsetBottomY);
-	mq2Measure.icon32 = new Icon(&gas32[0], gas32_offsetTopX, gas32_offsetTopY, gas32_offsetBottomX, gas32_offsetBottomY);
-
-	mq7Measure.name = "MQ-7";
-	mq7Measure.shortName = "CO GAS";
-	mq7Measure.metricName = "MQ-7";
-	mq7Measure.progressBarMin = 0;
-	mq7Measure.progressBarMax = 100;
-	mq7Measure.icon64 = new Icon(&gas64[0], gas64_offsetTopX, gas64_offsetTopY, gas64_offsetBottomX, gas64_offsetBottomY);
-	mq7Measure.icon32 = new Icon(&gas32[0], gas32_offsetTopX, gas32_offsetTopY, gas32_offsetBottomX, gas32_offsetBottomY);
-
+	//mq7DataCollector.setCurve(1, 100, 0.1, 4000);
+	mq2DataCollector_smoke.setCurve(1.1, 800, 0.5, 10000);
+	mq2DataCollector_smoke.setLoadResistance(10000);
+	mq2DataCollector_lpg.setCurve(0.77, 800, 0.155, 10000);
+	mq2DataCollector_lpg.setLoadResistance(10000);
+	mq2DataCollector_co.setCurve(4, 500, 1.3, 10000); 
+	mq2DataCollector_co.setLoadResistance(10000);
+		
+	mq2Measure_smoke.name = "MQ-2-SMOKE";
+	mq2Measure_smoke.shortName = "SMOKE";
+	mq2Measure_smoke.metricName = "MQ-2-SMOKE";
+	mq2Measure_smoke.progressBarMin = 0;
+	mq2Measure_smoke.progressBarMax = 100;
+	mq2Measure_smoke.icon64 = new Icon(&gas64[0], gas64_offsetTopX, gas64_offsetTopY, gas64_offsetBottomX, gas64_offsetBottomY);
+	mq2Measure_smoke.icon32 = new Icon(&gas32[0], gas32_offsetTopX, gas32_offsetTopY, gas32_offsetBottomX, gas32_offsetBottomY);
+	
+	mq2Measure_lpg.name = "MQ-2-LPG";
+	mq2Measure_lpg.shortName = "LPG";
+	mq2Measure_lpg.metricName = "MQ-2-LPG";
+	mq2Measure_lpg.progressBarMin = 0;
+	mq2Measure_lpg.progressBarMax = 100;
+	mq2Measure_lpg.icon64 = new Icon(&gas64[0], gas64_offsetTopX, gas64_offsetTopY, gas64_offsetBottomX, gas64_offsetBottomY);
+	mq2Measure_lpg.icon32 = new Icon(&gas32[0], gas32_offsetTopX, gas32_offsetTopY, gas32_offsetBottomX, gas32_offsetBottomY);
+	
+	mq2Measure_lpg.name = "MQ-2-CO";
+	mq2Measure_co.shortName = "CO";
+	mq2Measure_co.metricName = "MQ-2-CO";
+	mq2Measure_co.progressBarMin = 0;
+	mq2Measure_co.progressBarMax = 100;
+	mq2Measure_co.icon64 = new Icon(&gas64[0], gas64_offsetTopX, gas64_offsetTopY, gas64_offsetBottomX, gas64_offsetBottomY);
+	mq2Measure_co.icon32 = new Icon(&gas32[0], gas32_offsetTopX, gas32_offsetTopY, gas32_offsetBottomX, gas32_offsetBottomY);
+	
 	alarm.Init(measures);
 	headerComponent.setup(&alarm);
-
 	dataPublisher.init();
+	dataCollectorManager.Init(measures);
 
 	//
 	// Displpay init
@@ -289,8 +296,9 @@ void setup()
 	container.addView(&temperatureView);
 	container.addView(&humidityView);
 	container.addView(&pressureView);
-	container.addView(&mq7View);
-	container.addView(&mq2View);
+	container.addView(&mq2View_smoke);
+	container.addView(&mq2View_lpg);
+	container.addView(&mq2View_co);
 	container.init(&display);
 
 	//
@@ -299,9 +307,7 @@ void setup()
 	pinMode(BoardInput_Button2, INPUT_PULLUP);
 	attachInterrupt(BoardInput_Button1, onButton1Pressed, FALLING);
 	attachInterrupt(BoardInput_Button2, onButton2Pressed, FALLING);
-
 	
-	dataCollectorManager.Init(measures);
 	Particle.publish("events.photon.setup", "done");
 	actionsQueue.push(Action_SwitchToNextView);
 	collectionTimer.start();

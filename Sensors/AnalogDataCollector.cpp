@@ -12,7 +12,16 @@ void AnalogDataCollector::Init()
 
 float AnalogDataCollector::Collect()
 {
-	float val = Transform(analogRead(_analogPin));
+	return Collect(true);
+}
+
+float AnalogDataCollector::Collect(bool doTransform)
+{
+	float val = analogRead(_analogPin);
+	
+	if (doTransform)
+		val = Transform(val);
+
 	return val;
 }
 

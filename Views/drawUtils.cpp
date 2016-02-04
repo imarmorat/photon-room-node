@@ -36,7 +36,7 @@ static uint8_t getRed(int color) { return (color & 0x00ff0000) >> 16; }
 static uint8_t getBlue(int color) { return (color & 0x0000ff00) >> 8; }
 static uint8_t getGreen(int color) { return (color & 0x000000ff); }
 
-uint16_t convertRGB888toRGB565(int color, int background)
+uint16_t convertRGB888toRGB565(unsigned int color, unsigned int background)
 {
 	// color is ARGB
 	//
