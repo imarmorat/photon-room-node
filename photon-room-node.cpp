@@ -245,12 +245,12 @@ void setup()
 	pressureMeasure.icon32 = new Icon(&pressure32[0], pressure32_offsetTopX, pressure32_offsetTopY, pressure32_offsetBottomX, pressure32_offsetBottomY);
 
 	//mq7DataCollector.setCurve(1, 100, 0.1, 4000);
-	mq2DataCollector_smoke.setCurve(1.1, 800, 0.5, 10000);
-	mq2DataCollector_smoke.setLoadResistance(10000);
-	mq2DataCollector_lpg.setCurve(0.77, 800, 0.155, 10000);
-	mq2DataCollector_lpg.setLoadResistance(10000);
-	mq2DataCollector_co.setCurve(4, 500, 1.3, 10000); 
-	mq2DataCollector_co.setLoadResistance(10000);
+	mq2DataCollector_smoke.setCurve(1.1, 800, 0.6, 10000);
+	mq2DataCollector_smoke.setLoadResistance(5000);
+	mq2DataCollector_lpg.setCurve(0.8, 1000, 0.26, 10000);
+	mq2DataCollector_lpg.setLoadResistance(5000);
+	mq2DataCollector_co.setCurve(5, 200, 1.3, 10000); 
+	mq2DataCollector_co.setLoadResistance(5000);
 		
 	mq2Measure_smoke.name = "MQ-2-SMOKE";
 	mq2Measure_smoke.shortName = "SMOKE";

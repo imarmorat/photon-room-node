@@ -113,7 +113,7 @@ void AllSensorDataComponent::displayMeasure(Adafruit_ILI9341* display, bool isFi
 		// need to erase previous content as might leave leftovers
 		display->fillRect(x, yi, width, textHeight, overridenBgColor);
 	
-	String  value = String::format(measure->format, measure->latestValue);
+	String  value = measure->latestValue != UNDEFINED_VALUE ? String::format(measure->format, measure->latestValue) : "-";
 	display->setTextColor(measureValueColor, overridenBgColor);
 	display->setCursor(x + width / 2 - value.length()*charWidth/2, yi);
 	display->println(value);

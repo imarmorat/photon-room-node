@@ -1,29 +1,36 @@
 #include "MqSeriesDataCollector.h"
 #include <math.h>
 
+#define MQ_SENSOR_VOLTAGE_INPUT 5.0
+
+static float calcSensorResistanceLoad(float vInput, float boardResistanceLoad) 
+{
+	return  boardResistanceLoad * (MQ_SENSOR_VOLTAGE_INPUT / vInput - 1);
+}
+
 void MqSeriesDataCollector::Init()
 {
 	// the sensor config acts as a voltage divider due to the internal resistor
 	// therefore, with vOut being voltage across the R2 (here RL): 
 	// vOut = vIn * R2/ (R1 + R2)
-	// therefore R1 = [R2 * vIn / vOut] - R2
+	// therefore R1 = [R2 * vIn / vOut] - R2 = R2 * (vIn/vOut - 1)
 
 	// calibration
 	int nbSampling = 25;
 	int delayBetweenEachSample = 500;
-	float r0InCleanAir = 9830; // ohms, as per spreadsheet
+	float ratioCleanAir = 9.830; // RS/RO in clean air
 	float value = 0;
 	for (int i = 0; i < nbSampling; i++)
 	{
 		float vMeasured = Collect(false) * 0.0008;
-		value += _rl * (5 / vMeasured - 1); // we need raw values, so no transfo
+		value += calcSensorResistanceLoad(vMeasured, _rl); // we need raw values, so no transfo, RL omitted
 		delay(delayBetweenEachSample);
 	}
 	value /= nbSampling; // back to average
 
-	_roCalibrated =  1000 * value / r0InCleanAir;
+	_roCalibrated =  value / ratioCleanAir;
 
-	//Particle.publish("debug", String::format("caibration: %f %f %f", value, t, _roCalibrated));
+	Particle.publish("debug", String::format("caibration: %f", _roCalibrated));
 }
 
 void MqSeriesDataCollector::setCurve(float pointAx, float pointAy, float pointBx, float pointBy)
@@ -52,11 +59,8 @@ float MqSeriesDataCollector::Transform(float input)
 	//
 	// Robtillaart's approach
 	// http://forum.arduino.cc/index.php/topic,55780.0.html
-	float val = input * 0.0008; // convert into voltage
-
-	float vcc = 5; // voltage provided to the sensor
-
-	float rs = _rl * (vcc/val - 1); 
+	float vMeasured = input * 0.0008; // convert into voltage
+	float rs = calcSensorResistanceLoad(vMeasured, _rl);
 	float ppm = _aConstant * pow(rs/ _roCalibrated, _bConstant);
 
 	return ppm;
