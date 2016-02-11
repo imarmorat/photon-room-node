@@ -246,11 +246,11 @@ void setup()
 
 	//mq7DataCollector.setCurve(1, 100, 0.1, 4000);
 	mq2DataCollector_smoke.setCurve(1.1, 800, 0.6, 10000);
-	mq2DataCollector_smoke.setLoadResistance(5000);
+	mq2DataCollector_smoke.setParams(4.5, 5000);
 	mq2DataCollector_lpg.setCurve(0.8, 1000, 0.26, 10000);
-	mq2DataCollector_lpg.setLoadResistance(5000);
+	mq2DataCollector_lpg.setParams(4.5, 5000);
 	mq2DataCollector_co.setCurve(5, 200, 1.3, 10000); 
-	mq2DataCollector_co.setLoadResistance(5000);
+	mq2DataCollector_co.setParams(4.5, 5000);
 		
 	mq2Measure_smoke.name = "MQ-2-SMOKE";
 	mq2Measure_smoke.shortName = "SMOKE";

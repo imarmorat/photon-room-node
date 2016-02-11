@@ -1,11 +1,9 @@
 #include "MqSeriesDataCollector.h"
 #include <math.h>
 
-#define MQ_SENSOR_VOLTAGE_INPUT 5.0
-
-static float calcSensorResistanceLoad(float vInput, float boardResistanceLoad) 
+static float calcSensorResistanceLoad(float vInput, float vSensor, float boardResistanceLoad) 
 {
-	return  boardResistanceLoad * (MQ_SENSOR_VOLTAGE_INPUT / vInput - 1);
+	return  boardResistanceLoad * (vSensor / vInput - 1);
 }
 
 void MqSeriesDataCollector::Init()
@@ -20,17 +18,19 @@ void MqSeriesDataCollector::Init()
 	int delayBetweenEachSample = 500;
 	float ratioCleanAir = 9.830; // RS/RO in clean air
 	float value = 0;
+
 	for (int i = 0; i < nbSampling; i++)
 	{
 		float vMeasured = Collect(false) * 0.0008;
-		value += calcSensorResistanceLoad(vMeasured, _rl); // we need raw values, so no transfo, RL omitted
+		value += calcSensorResistanceLoad(vMeasured, _vIn, _resistanceLoad); // we need raw values, so no transfo, RL omitted
 		delay(delayBetweenEachSample);
 	}
 	value /= nbSampling; // back to average
 
 	_roCalibrated =  value / ratioCleanAir;
 
-	Particle.publish("debug", String::format("caibration: %f", _roCalibrated));
+	if (_debug)
+		Particle.publish("debug", String::format("caibration: %f", _roCalibrated));
 }
 
 void MqSeriesDataCollector::setCurve(float pointAx, float pointAy, float pointBx, float pointBy)
@@ -44,14 +44,14 @@ void MqSeriesDataCollector::setCurve(float pointAx, float pointAy, float pointBx
 	float lnA = log(pointBy) - _bConstant * log(pointBx);
 	_aConstant = exp(lnA);
 
-	//a=1085.641479 b=-3.203380
-	//a=20123.587891 b=-2.665408
-	Particle.publish("debug", String::format("a=%f b=%f", _aConstant, _bConstant));
+	if (_debug)
+		Particle.publish("debug", String::format("a=%f b=%f", _aConstant, _bConstant));
 }
 
-void MqSeriesDataCollector::setLoadResistance(float load)
+void MqSeriesDataCollector::setParams(float resistanceLoad, float vIn)
 {
-	_rl = load;
+	_resistanceLoad = resistanceLoad;
+	_vIn = vIn;
 }
 
 float MqSeriesDataCollector::Transform(float input)
@@ -60,7 +60,7 @@ float MqSeriesDataCollector::Transform(float input)
 	// Robtillaart's approach
 	// http://forum.arduino.cc/index.php/topic,55780.0.html
 	float vMeasured = input * 0.0008; // convert into voltage
-	float rs = calcSensorResistanceLoad(vMeasured, _rl);
+	float rs = calcSensorResistanceLoad(vMeasured, _vIn, _resistanceLoad);
 	float ppm = _aConstant * pow(rs/ _roCalibrated, _bConstant);
 
 	return ppm;
