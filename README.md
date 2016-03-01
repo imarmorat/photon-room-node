@@ -9,9 +9,9 @@ The photon gets the following values:
 A ILI9341 display allows for generic and more details view of each sensor.
 
 An alerting system allows for IFTTT extension; each measurement can define a Warning and Critical zone which will be checked each time a measurement collection is done. 
-An overall "alarm" status is computed from all the measurements; if any warning or critical measurement found, the display will alert the user and display which sensor showing worrying values.
+An overall "alarm" status is computed from all the measurements; if any warning or critical measurement found, the display will alert the user and display which sensor shows worrying values.
 
-As the Particle Photon dashboard does not have anything fancy yet, I am using a raspberry pi that hosts InfluxDb and Grafana (see http://padcom13.blogspot.co.uk/2015/12/influxdb-telegraf-and-grafana-on.html for prebuild packages). Because InfluxDB is progressively phasing out JSon for performance reasons, I am sending values through UDP (REST under photon is cumbersome at the time or writting).
+As the Particle Photon dashboard does not have anything fancy yet, I am using a raspberry pi to hostsInfluxDb and Grafana (see http://padcom13.blogspot.co.uk/2015/12/influxdb-telegraf-and-grafana-on.html for prebuild packages). Because InfluxDB is progressively phasing out JSon for performance reasons, I am sending values through UDP (REST under photon is cumbersome at the time of writting).
 WebHooks could have been an option but the current implementation does not allow for free format and means having a roundtrip local-network to web to local-network that is unnecessary.
 
 # dependencies
